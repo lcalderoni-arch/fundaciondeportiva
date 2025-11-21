@@ -33,7 +33,11 @@ public class AuthController {
     private JwtService jwtService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginOutputDTO> login(@Valid @RequestBody LoginInputDTO loginInputDTO) {
+    public ResponseEntity<LoginOutputDTO> login(
+        @Valid @RequestBody LoginInputDTO loginInputDTO, 
+        HttpServletResponse response
+        ) {
+        
         // 1. Spring Security autentica al usuario
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginInputDTO.getEmail(), loginInputDTO.getPassword())
