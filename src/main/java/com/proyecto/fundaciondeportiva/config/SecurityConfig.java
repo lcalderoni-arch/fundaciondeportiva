@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         // Rutas públicas
-                        .requestMatchers("/api/usuarios/crear", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll() .requestMatchers("/api/usuarios/crear").permitAll()
 
                         // AÑADIDO: Permite la ruta /me para el perfil propio (aunque ya tiene @PreAuthorize)
                         // Para ser más explícito
