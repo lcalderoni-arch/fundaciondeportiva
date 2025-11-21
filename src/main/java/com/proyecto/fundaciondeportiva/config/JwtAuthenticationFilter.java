@@ -3,6 +3,7 @@ package com.proyecto.fundaciondeportiva.config;
 import com.proyecto.fundaciondeportiva.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @Component // Para que Spring lo detecte como un bean
 public class JwtAuthenticationFilter extends OncePerRequestFilter { // Se ejecuta una vez por petición
@@ -33,18 +35,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // Se ejecut
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
+        
+        final String jwt = getJwtFromCookies(request);
         final String userEmail;
 
         // 1. Verifica si viene el header 'Authorization' y si empieza con 'Bearer '
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response); // Si no, pasa al siguiente filtro
+        if (jwt == null) {
+            filterChain.doFilter(request, response); // Si no hay token, pasa al siguiente filtro
             return;
         }
-
-        // 2. Extrae el token (quitando "Bearer ")
-        jwt = authHeader.substring(7);
 
         try {
             // 3. Extrae el email del token usando JwtService
@@ -83,5 +82,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // Se ejecut
             // Importante: No continuar con filterChain.doFilter si el token es inválido
             return;
         }
+    }
+
+    private String getJwtFromCookies(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        // Busca la cookie con el nombre específico
+        return Arrays.stream(cookies)
+                .filter(cookie -> "jwt_token".equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 }
