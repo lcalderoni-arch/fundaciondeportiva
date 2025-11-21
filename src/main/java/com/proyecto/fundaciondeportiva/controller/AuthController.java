@@ -60,10 +60,10 @@ public class AuthController {
         response.addCookie(jwtCookie);
         
         // 4. Creamos y devolvemos la respuesta
-        LoginOutputDTO response = LoginOutputDTO.builder()
+        LoginOutputDTO responseBody = LoginOutputDTO.builder()
                 .nombre(usuario.getNombre())
                 .rol(usuario.getRol())
-                .build();
+                .build(); // <-- Se quita .token(token)
 
         return ResponseEntity.ok(response);
     }
