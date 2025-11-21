@@ -35,7 +35,7 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioOutputDTO> crearUsuario(@Valid @RequestBody UsuarioInputDTO inputDTO) {
         Usuario nuevoUsuario = usuarioService.crearUsuario(inputDTO);
-        UsuarioOutputDTO outputDTO = convertirAUsuarioOutputDTO(nuevoUsuario);
+        UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(nuevoUsuario);
         return new ResponseEntity<>(outputDTO, HttpStatus.CREATED);
     }
 
@@ -54,7 +54,7 @@ public class UsuarioController {
         Usuario usuario = usuarioService.obtenerUsuarioPorEmail(emailAutenticado) // ¡NUEVO MÉTODO REQUERIDO EN UsuarioService!
                 .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado en la base de datos."));
 
-        UsuarioOutputDTO outputDTO = convertirAUsuarioOutputDTO(usuario);
+        UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(usuario);
         return ResponseEntity.ok(outputDTO);
     }
 
@@ -65,7 +65,7 @@ public class UsuarioController {
     public ResponseEntity<List<UsuarioOutputDTO>> listarTodosLosUsuarios() {
         List<Usuario> usuarios = usuarioService.listarTodosLosUsuarios();
         List<UsuarioOutputDTO> outputDTOs = usuarios.stream()
-                .map(this::convertirAUsuarioOutputDTO)
+                .map(UsuarioOutputDTO::deEntidad) // Equivale a usuario -> UsuarioOutputDTO.deEntidad(usuario)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(outputDTOs);
     }
@@ -74,7 +74,7 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioOutputDTO> obtenerUsuarioPorId(@PathVariable Long id) {
         Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
-        UsuarioOutputDTO outputDTO = convertirAUsuarioOutputDTO(usuario);
+        UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(usuario);
         return ResponseEntity.ok(outputDTO);
     }
 
@@ -82,7 +82,7 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioOutputDTO> editarUsuario(@PathVariable Long id, @Valid @RequestBody UsuarioUpdateDTO updateDTO) {
         Usuario usuarioActualizado = usuarioService.editarUsuario(id, updateDTO);
-        UsuarioOutputDTO outputDTO = convertirAUsuarioOutputDTO(usuarioActualizado);
+        UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(usuarioActualizado);
         return ResponseEntity.ok(outputDTO);
     }
 
@@ -97,26 +97,26 @@ public class UsuarioController {
     /**
      * Método privado de utilidad para convertir Usuario a UsuarioOutputDTO.
      */
-    private UsuarioOutputDTO convertirAUsuarioOutputDTO(Usuario usuario) {
-        if (usuario == null) {
-            return null;
-        }
+    // private UsuarioOutputDTO convertirAUsuarioOutputDTO(Usuario usuario) {
+    //     if (usuario == null) {
+    //         return null;
+    //     }
 
-        UsuarioOutputDTO dto = new UsuarioOutputDTO();
-        dto.setId(usuario.getId());
-        dto.setNombre(usuario.getNombre());
-        dto.setEmail(usuario.getEmail());
-        dto.setRol(usuario.getRol());
+    //     UsuarioOutputDTO dto = new UsuarioOutputDTO();
+    //     dto.setId(usuario.getId());
+    //     dto.setNombre(usuario.getNombre());
+    //     dto.setEmail(usuario.getEmail());
+    //     dto.setRol(usuario.getRol());
 
-        if (usuario.getPerfilAlumno() != null) {
-            dto.setDni(usuario.getPerfilAlumno().getDni()); // AÑADIDO DNI
-            dto.setGrado(usuario.getPerfilAlumno().getGrado()); // CAMBIO DE CARRERA A GRADO
-            dto.setCodigoEstudiante(usuario.getPerfilAlumno().getCodigoEstudiante());
-        }
-        if (usuario.getPerfilProfesor() != null) {
-            dto.setDni(usuario.getPerfilProfesor().getDni()); // AÑADIDO DNI
-            // ELIMINADO: dto.setDepartamento(...)
-        }
-        return dto;
-    }
+    //     if (usuario.getPerfilAlumno() != null) {
+    //         dto.setDni(usuario.getPerfilAlumno().getDni()); // AÑADIDO DNI
+    //         dto.setGrado(usuario.getPerfilAlumno().getGrado()); // CAMBIO DE CARRERA A GRADO
+    //         dto.setCodigoEstudiante(usuario.getPerfilAlumno().getCodigoEstudiante());
+    //     }
+    //     if (usuario.getPerfilProfesor() != null) {
+    //         dto.setDni(usuario.getPerfilProfesor().getDni()); // AÑADIDO DNI
+    //         // ELIMINADO: dto.setDepartamento(...)
+    //     }
+    //     return dto;
+    // }
 }
