@@ -13,14 +13,15 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**") // Aplica CORS a todas las rutas bajo /api
-                        .allowedOrigins( // Orígenes permitidos (direcciones del frontend)
-                                "http://localhost:3000", // React por defecto
-                                "http://127.0.0.1:5500"  // Live Server de VS Code (HTML simple)
+                registry.addMapping("/api/**")
+                        .allowedOrigins(
+                                "http://localhost:3000", // React local
+                                "http://127.0.0.1:5500",  // Live Server local
+                                "https://lively-sky-01eaba510.3.azurestaticapps.net" // ✅ FRONTEND EN AZURE
                         )
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Métodos HTTP permitidos
-                        .allowedHeaders("*") // Cabeceras permitidas (como Authorization)
-                        .allowCredentials(true); // Permite enviar cookies/credenciales (útil si usas sesiones, aunque JWT no las necesita tanto)
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
             }
         };
     }
