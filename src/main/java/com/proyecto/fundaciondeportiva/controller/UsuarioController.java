@@ -95,28 +95,13 @@ public class UsuarioController {
 
 
     /**
-     * Método privado de utilidad para convertir Usuario a UsuarioOutputDTO.
+     * 🚨 ¡MÉTODO ELIMINADO!
+     * Este método privado (convertirAUsuarioOutputDTO) causaba el error 500
+     * porque intentaba llamar a 'dto.setDni()', que ya no existe.
+     * La lógica de conversión ahora vive de forma estática en 'UsuarioOutputDTO.deEntidad()'.
      */
-    // private UsuarioOutputDTO convertirAUsuarioOutputDTO(Usuario usuario) {
-    //     if (usuario == null) {
-    //         return null;
-    //     }
-
-    //     UsuarioOutputDTO dto = new UsuarioOutputDTO();
-    //     dto.setId(usuario.getId());
-    //     dto.setNombre(usuario.getNombre());
-    //     dto.setEmail(usuario.getEmail());
-    //     dto.setRol(usuario.getRol());
-
-    //     if (usuario.getPerfilAlumno() != null) {
-    //         dto.setDni(usuario.getPerfilAlumno().getDni()); // AÑADIDO DNI
-    //         dto.setGrado(usuario.getPerfilAlumno().getGrado()); // CAMBIO DE CARRERA A GRADO
-    //         dto.setCodigoEstudiante(usuario.getPerfilAlumno().getCodigoEstudiante());
-    //     }
-    //     if (usuario.getPerfilProfesor() != null) {
-    //         dto.setDni(usuario.getPerfilProfesor().getDni()); // AÑADIDO DNI
-    //         // ELIMINADO: dto.setDepartamento(...)
-    //     }
-    //     return dto;
-    // }
+    /*
+    private UsuarioOutputDTO convertirAUsuarioOutputDTO(Usuario usuario) {
+        // ... (TODO ESTE CÓDIGO ANTIGUO Y ROTO SE HA IDO)
+    }
 }
