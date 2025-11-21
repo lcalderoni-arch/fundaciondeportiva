@@ -65,7 +65,7 @@ public class AuthController {
                 .rol(usuario.getRol())
                 .build(); // <-- Se quita .token(token)
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(responseBody);
     }
 
     @PostMapping("/logout")
