@@ -15,9 +15,10 @@ public class WebConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
                         .allowedOrigins(
-                                "http://localhost:3000", // React local
-                                "http://127.0.0.1:5500",  // Live Server local
-                                "https://lively-sky-01eaba510.3.azurestaticapps.net" // ✅ FRONTEND EN AZURE
+                                "http://localhost:3000",
+                                "http://localhost:5173",
+                                "http://127.0.0.1:5500",
+                                "https://lively-sky-01eaba510.3.azurestaticapps.net" // ✅ Tu frontend
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
@@ -25,4 +26,5 @@ public class WebConfig {
             }
         };
     }
+}
 }
