@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import static org.springframework.security.config.Customizer.withDefaults; // ⭐ AGREGAR IMPORT
 
 @Configuration
 @EnableWebSecurity
@@ -33,10 +34,10 @@ public class SecurityConfig {
                                                    AuthenticationProvider authenticationProvider,
                                                    JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http
-                .cors(cors -> cors.configure(http)) // ⭐ SINTAXIS CORRECTA
+                .cors(withDefaults()) // ⭐ SINTAXIS CORRECTA
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ⭐ Cambiado a /**
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers("/api/usuarios/crear").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
