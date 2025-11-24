@@ -60,6 +60,7 @@ public class AuthController {
 
         // 4. Creamos y devolvemos la respuesta
         LoginOutputDTO responseBody = LoginOutputDTO.builder()
+                .token(token)
                 .nombre(usuario.getNombre())
                 .rol(usuario.getRol())
                 .build();
