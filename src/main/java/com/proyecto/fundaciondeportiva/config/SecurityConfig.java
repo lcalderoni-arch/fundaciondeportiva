@@ -33,10 +33,10 @@ public class SecurityConfig {
                                                    AuthenticationProvider authenticationProvider,
                                                    JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http
-                .cors() // ⭐ AGREGADO: Habilita CORS usando WebConfig
+                .cors(cors -> cors.configure(http)) // ⭐ SINTAXIS CORRECTA
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll() // ✅ Ya lo tienes
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers("/api/usuarios/crear").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
