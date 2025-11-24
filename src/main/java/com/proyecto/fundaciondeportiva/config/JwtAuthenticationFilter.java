@@ -35,25 +35,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        final String jwt = getJwtFromCookies(request);
-        final String userEmail;
+        // ✅ BUSCAR TOKEN PRIMERO EN HEADER, LUEGO EN COOKIES
+        String jwt = null;
 
+        // 1. Intentar obtener de header Authorization
+        final String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+        }
+
+        // 2. Si no está en header, intentar en cookie
+        if (jwt == null) {
+            jwt = getJwtFromCookies(request);
+        }
+
+        // 3. Si no hay token en ningún lado, continuar sin autenticar
         if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            userEmail = jwtService.extractUsername(jwt);
+            // 4. Extraer email del token
+            String userEmail = jwtService.extractUsername(jwt);
 
+            // 5. Si hay email y no está autenticado aún
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
+                // 6. Validar token
                 if (jwtService.validateToken(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
-                            userDetails.getAuthorities()
+                            userDetails.getAuthorities() // ✅ Aquí se incluyen los roles
                     );
                     authToken.setDetails(
                             new WebAuthenticationDetailsSource().buildDetails(request)
@@ -63,7 +78,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
             filterChain.doFilter(request, response);
         } catch (Exception e) {
-            logger.warn("Error al procesar el token JWT: {}" + e.getMessage());
+            logger.warn("Error al procesar el token JWT: " + e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Token JWT inválido o expirado");
             return;
