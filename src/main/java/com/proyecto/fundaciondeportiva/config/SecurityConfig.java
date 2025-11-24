@@ -17,12 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -39,20 +33,12 @@ public class SecurityConfig {
                                                    AuthenticationProvider authenticationProvider,
                                                    JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http
-
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Rutas públicas
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll() .requestMatchers("/api/usuarios/crear").permitAll()
-
-                        // AÑADIDO: Permite la ruta /me para el perfil propio (aunque ya tiene @PreAuthorize)
-                        // Para ser más explícito
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers("/api/usuarios/crear").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
-
-                        // Crucial para CORS
                         .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
-
-                        // Todas las demás rutas requieren autenticación
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
