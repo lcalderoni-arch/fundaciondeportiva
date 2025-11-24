@@ -7,7 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class FundaciondeportivaApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(FundaciondeportivaApplication.class, args);
+
+        SpringApplication.run(FundaciondeportivaApplication.class, args);
 	}
 	
 }

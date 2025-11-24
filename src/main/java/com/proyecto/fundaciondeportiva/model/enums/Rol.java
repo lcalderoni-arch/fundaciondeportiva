@@ -1,4 +1,4 @@
-package com.proyecto.fundaciondeportiva.model;
+package com.proyecto.fundaciondeportiva.model.enums;
 
 public enum Rol {
     ADMINISTRADOR,

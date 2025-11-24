@@ -1,5 +1,4 @@
-package com.proyecto.fundaciondeportiva.dto.input;
-
+package com.proyecto.fundaciondeportiva.dto.request;
 
 import com.proyecto.fundaciondeportiva.model.enums.NivelAcademico;
 import com.proyecto.fundaciondeportiva.model.enums.Rol;
@@ -12,12 +11,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * DTO para registrar un nuevo Usuario (Admin, Profesor o Alumno).
+ * Este es el REEMPLAZO de tu 'UsuarioInputDTO' antiguo.
+ * Contiene todos los campos del diagrama PlantUML.
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsuarioInputDTO {
+public class RegistroUsuarioRequest {
 
+    // --- Campos de Usuario ---
     @NotBlank(message = "El nombre es obligatorio")
     @Size(min = 3, max = 100)
     private String nombre;
@@ -33,7 +38,7 @@ public class UsuarioInputDTO {
     @NotNull(message = "El rol es obligatorio")
     private Rol rol;
 
-    // AÑADIDO: DNI (Común para Alumno y Profesor)
+    // --- Campos de PerfilProfesor (Opcionales, solo para Rol.PROFESOR) ---
     @Size(min = 8, max = 15, message = "DNI de Profesor debe tener entre 8 y 15 caracteres")
     private String dniProfesor;
 
@@ -41,16 +46,13 @@ public class UsuarioInputDTO {
     private String experiencia;
     private String gradoAcademico;
 
+    // --- Campos de PerfilAlumno (Opcionales, solo para Rol.ALUMNO) ---
     @Size(min = 8, max = 15, message = "DNI de Alumno debe tener entre 8 y 15 caracteres")
     private String dniAlumno;
 
-    private String codigoEstudiante;
+    private String codigoEstudiante; // Opcional, se puede autogenerar
 
-    // CAMPO DE ALUMNO: 'grado' en lugar de 'carrera'
+    // Estos son requeridos si el rol es ALUMNO
     private NivelAcademico nivel;
     private String grado;
-
-    // ELIMINADO: private String carrera;
-    // ELIMINADO: private String codigoEstudiante; (Se genera en el servicio)
-    // ELIMINADO: private String departamento;
 }

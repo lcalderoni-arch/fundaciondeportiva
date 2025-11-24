@@ -1,6 +1,6 @@
 package com.proyecto.fundaciondeportiva.dto.output;
 
-import com.proyecto.fundaciondeportiva.model.Rol;
+import com.proyecto.fundaciondeportiva.model.enums.Rol;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

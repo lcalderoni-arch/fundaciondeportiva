@@ -3,7 +3,7 @@ package com.proyecto.fundaciondeportiva.controller;
 import com.proyecto.fundaciondeportiva.dto.input.UsuarioInputDTO;
 import com.proyecto.fundaciondeportiva.dto.output.UsuarioUpdateDTO;
 import com.proyecto.fundaciondeportiva.dto.output.UsuarioOutputDTO;
-import com.proyecto.fundaciondeportiva.model.Usuario;
+import com.proyecto.fundaciondeportiva.model.entity.Usuario;
 import com.proyecto.fundaciondeportiva.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,8 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioOutputDTO> crearUsuario(@Valid @RequestBody UsuarioInputDTO inputDTO) {
         Usuario nuevoUsuario = usuarioService.crearUsuario(inputDTO);
-        UsuarioOutputDTO outputDTO = convertirAUsuarioOutputDTO(nuevoUsuario);
+
+        UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(nuevoUsuario);
         return new ResponseEntity<>(outputDTO, HttpStatus.CREATED);
     }
 
@@ -54,7 +55,7 @@ public class UsuarioController {
         Usuario usuario = usuarioService.obtenerUsuarioPorEmail(emailAutenticado) // ¡NUEVO MÉTODO REQUERIDO EN UsuarioService!
                 .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado en la base de datos."));
 
-        UsuarioOutputDTO outputDTO = convertirAUsuarioOutputDTO(usuario);
+        UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(usuario);
         return ResponseEntity.ok(outputDTO);
     }
 
@@ -65,7 +66,7 @@ public class UsuarioController {
     public ResponseEntity<List<UsuarioOutputDTO>> listarTodosLosUsuarios() {
         List<Usuario> usuarios = usuarioService.listarTodosLosUsuarios();
         List<UsuarioOutputDTO> outputDTOs = usuarios.stream()
-                .map(this::convertirAUsuarioOutputDTO)
+                .map(UsuarioOutputDTO::deEntidad) // Equivale a usuario -> UsuarioOutputDTO.deEntidad(usuario)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(outputDTOs);
     }
@@ -74,15 +75,15 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioOutputDTO> obtenerUsuarioPorId(@PathVariable Long id) {
         Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
-        UsuarioOutputDTO outputDTO = convertirAUsuarioOutputDTO(usuario);
+        UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(usuario);
         return ResponseEntity.ok(outputDTO);
     }
 
     @PutMapping(value = "/editar/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioOutputDTO> editarUsuario(@PathVariable Long id, @Valid @RequestBody UsuarioUpdateDTO updateDTO) {
-        Usuario usuarioActualizado = usuarioService.editarUsuario(id, updateDTO);
-        UsuarioOutputDTO outputDTO = convertirAUsuarioOutputDTO(usuarioActualizado);
+        Usuario usuarioActualizado = usuarioService.actualizarUsuario(id, updateDTO);
+        UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(usuarioActualizado);
         return ResponseEntity.ok(outputDTO);
     }
 
@@ -94,29 +95,15 @@ public class UsuarioController {
     }
 
 
-    /**
-     * Método privado de utilidad para convertir Usuario a UsuarioOutputDTO.
-     */
+/**
+ * 🚨 ¡MÉTODO ELIMINADO!
+ * Este método privado (convertirAUsuarioOutputDTO) causaba el error 500
+ * porque intentaba llamar a 'dto.setDni()', que ya no existe.
+ * La lógica de conversión ahora vive de forma estática en 'UsuarioOutputDTO.deEntidad()'.
+ */
+    /*
     private UsuarioOutputDTO convertirAUsuarioOutputDTO(Usuario usuario) {
-        if (usuario == null) {
-            return null;
-        }
-
-        UsuarioOutputDTO dto = new UsuarioOutputDTO();
-        dto.setId(usuario.getId());
-        dto.setNombre(usuario.getNombre());
-        dto.setEmail(usuario.getEmail());
-        dto.setRol(usuario.getRol());
-
-        if (usuario.getPerfilAlumno() != null) {
-            dto.setDni(usuario.getPerfilAlumno().getDni()); // AÑADIDO DNI
-            dto.setGrado(usuario.getPerfilAlumno().getGrado()); // CAMBIO DE CARRERA A GRADO
-            dto.setCodigoEstudiante(usuario.getPerfilAlumno().getCodigoEstudiante());
-        }
-        if (usuario.getPerfilProfesor() != null) {
-            dto.setDni(usuario.getPerfilProfesor().getDni()); // AÑADIDO DNI
-            // ELIMINADO: dto.setDepartamento(...)
-        }
-        return dto;
+        // ... (TODO ESTE CÓDIGO ANTIGUO Y ROTO SE HA IDO)
     }
+    */
 }

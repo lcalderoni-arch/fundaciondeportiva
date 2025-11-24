@@ -1,7 +1,7 @@
 package com.proyecto.fundaciondeportiva.config;
 
-import com.proyecto.fundaciondeportiva.model.Rol;
-import com.proyecto.fundaciondeportiva.model.Usuario;
+import com.proyecto.fundaciondeportiva.model.enums.Rol;
+import com.proyecto.fundaciondeportiva.model.entity.Usuario;
 import com.proyecto.fundaciondeportiva.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -28,7 +28,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setNombre("Admin Principal");
             admin.setEmail("admin@fundacion.com");
             // ¡Importante! Ciframos la contraseña antes de guardarla.
-                    admin.setPassword(passwordEncoder.encode("adminfundacion_2025"));
+            admin.setPassword(passwordEncoder.encode("adminfundacion_2025"));
             admin.setRol(Rol.ADMINISTRADOR);
 
             // Guardamos el usuario en la base de datos
