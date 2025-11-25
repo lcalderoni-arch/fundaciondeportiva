@@ -2,6 +2,7 @@ package com.proyecto.fundaciondeportiva.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -12,8 +13,19 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-@ControllerAdvice // Indica que esta clase manejará excepciones globalmente
+@ControllerAdvice
 public class GlobalExceptionHandler {
+
+    // Manejador para BadCredentialsException (login incorrecto)
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Email o contraseña incorrectos",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
 
     // Manejador para ResourceNotFoundException
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -38,7 +50,7 @@ public class GlobalExceptionHandler {
 
     // Manejador para errores de validación (@Valid)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST) // Devuelve 400 por defecto para validación
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
@@ -50,7 +62,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("errors", errors); // Devuelve un mapa de campos y sus errores
+        body.put("errors", errors);
         body.put("message", "Errores de validación");
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
@@ -59,9 +71,11 @@ public class GlobalExceptionHandler {
     // Manejador genérico para otras excepciones no controladas explícitamente
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        // Loggear la excepción completa para depuración interna
-        // logger.error("Ocurrió un error inesperado", ex);
-        ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Ocurrió un error interno en el servidor", LocalDateTime.now());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Ocurrió un error interno en el servidor",
+                LocalDateTime.now()
+        );
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
