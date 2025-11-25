@@ -35,6 +35,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // ⭐ NUEVO: Saltar OPTIONS (preflight) sin validar token
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // ✅ BUSCAR TOKEN PRIMERO EN HEADER, LUEGO EN COOKIES
         String jwt = null;
 
@@ -68,7 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
-                            userDetails.getAuthorities() // ✅ Aquí se incluyen los roles
+                            userDetails.getAuthorities()
                     );
                     authToken.setDetails(
                             new WebAuthenticationDetailsSource().buildDetails(request)
@@ -76,13 +82,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-            filterChain.doFilter(request, response);
         } catch (Exception e) {
+            // ⭐ MODIFICADO: Solo loguear, NO bloquear la petición
             logger.warn("Error al procesar el token JWT: " + e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token JWT inválido o expirado");
-            return;
+            // Dejar que Spring Security maneje la falta de autenticación
         }
+
+        // ⭐ IMPORTANTE: SIEMPRE continuar con el chain
+        filterChain.doFilter(request, response);
     }
 
     private String getJwtFromCookies(HttpServletRequest request) {
