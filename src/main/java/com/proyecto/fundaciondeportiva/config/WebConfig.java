@@ -13,16 +13,17 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**")
+                registry.addMapping("/**") // ⭐ /** para TODO
                         .allowedOrigins(
                                 "http://localhost:3000",
                                 "http://localhost:5173",
                                 "http://127.0.0.1:5500",
-                                "https://lively-sky-01eaba510.3.azurestaticapps.net" // ✅ Tu frontend
+                                "https://lively-sky-01eaba510.3.azurestaticapps.net"
                         )
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                         .allowedHeaders("*")
-                        .allowCredentials(true);
+                        .allowCredentials(true)
+                        .maxAge(3600);
             }
         };
     }
