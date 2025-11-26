@@ -10,8 +10,8 @@ import java.util.Optional;
 @Repository
 public interface PerfilProfesorRepository extends JpaRepository<PerfilProfesor, Long> {
 
-    Optional<PerfilProfesor> findByDni(String dni);
-
-    // AÑADIDO: Método para verificar unicidad del DNI
     boolean existsByDni(String dni);
+
+    // ⭐ NUEVO: Para obtener el perfil completo y dar mejor mensaje de error
+    Optional<PerfilProfesor> findByDni(String dni);
 }

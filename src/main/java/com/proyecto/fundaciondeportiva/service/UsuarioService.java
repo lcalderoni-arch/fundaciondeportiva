@@ -74,9 +74,20 @@ public class UsuarioService implements UserDetailsService {
     @Transactional
     public Usuario crearUsuario(UsuarioInputDTO request) {
 
-        // --- 1. Validaciones de Negocio ---
+        // --- 1. Validación de Email (MEJORADA) ---
         if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new ValidacionException("El correo electrónico ya está en uso.");
+            // Buscar el usuario con ese email para dar más info
+            Usuario usuarioExistente = usuarioRepository.findByEmail(request.getEmail()).orElse(null);
+            if (usuarioExistente != null) {
+                throw new ValidacionException(
+                        String.format("Ya existe un usuario con el correo '%s' (Nombre: %s, Rol: %s)",
+                                request.getEmail(),
+                                usuarioExistente.getNombre(),
+                                usuarioExistente.getRol())
+                );
+            } else {
+                throw new ValidacionException("El correo electrónico ya está en uso.");
+            }
         }
 
         // Construir la entidad Usuario base
@@ -94,7 +105,18 @@ public class UsuarioService implements UserDetailsService {
                 throw new ValidacionException("El DNI es obligatorio para el alumno.");
             }
             if (perfilAlumnoRepository.existsByDni(request.getDniAlumno())) {
-                throw new ValidacionException("El DNI del alumno ya está registrado.");
+                // Buscar el alumno con ese DNI para dar más info
+                PerfilAlumno perfilExistente = perfilAlumnoRepository.findByDni(request.getDniAlumno()).orElse(null);
+                if (perfilExistente != null && perfilExistente.getUsuario() != null) {
+                    throw new ValidacionException(
+                            String.format("Ya existe un alumno con el DNI '%s' (Nombre: %s, Código: %s)",
+                                    request.getDniAlumno(),
+                                    perfilExistente.getUsuario().getNombre(),
+                                    perfilExistente.getCodigoEstudiante())
+                    );
+                } else {
+                    throw new ValidacionException("El DNI del alumno ya está registrado.");
+                }
             }
             if (request.getNivel() == null) {
                 throw new ValidacionException("El Nivel Académico es obligatorio para el alumno.");
@@ -108,7 +130,9 @@ public class UsuarioService implements UserDetailsService {
             if (codigoEstudiante == null || codigoEstudiante.isBlank()) {
                 codigoEstudiante = generarCodigoEstudianteUnico();
             } else if (perfilAlumnoRepository.existsByCodigoEstudiante(codigoEstudiante)) {
-                throw new ValidacionException("El código de estudiante ya existe.");
+                throw new ValidacionException(
+                        String.format("El código de estudiante '%s' ya está en uso.", codigoEstudiante)
+                );
             }
 
             // Crear y asociar el perfil
@@ -127,7 +151,17 @@ public class UsuarioService implements UserDetailsService {
                 throw new ValidacionException("El DNI es obligatorio para el profesor.");
             }
             if (perfilProfesorRepository.existsByDni(request.getDniProfesor())) {
-                throw new ValidacionException("El DNI del profesor ya está registrado.");
+                // Buscar el profesor con ese DNI para dar más info
+                PerfilProfesor perfilExistente = perfilProfesorRepository.findByDni(request.getDniProfesor()).orElse(null);
+                if (perfilExistente != null && perfilExistente.getUsuario() != null) {
+                    throw new ValidacionException(
+                            String.format("Ya existe un profesor con el DNI '%s' (Nombre: %s)",
+                                    request.getDniProfesor(),
+                                    perfilExistente.getUsuario().getNombre())
+                    );
+                } else {
+                    throw new ValidacionException("El DNI del profesor ya está registrado.");
+                }
             }
 
             // Crear y asociar el perfil
@@ -136,7 +170,7 @@ public class UsuarioService implements UserDetailsService {
                     .telefono(request.getTelefono())
                     .experiencia(request.getExperiencia())
                     .gradoAcademico(request.getGradoAcademico())
-                    .usuario(nuevoUsuario) // Vincula el perfil al usuario
+                    .usuario(nuevoUsuario)
                     .build();
             nuevoUsuario.setPerfilProfesor(perfil); // Vincula el usuario al perfil
 

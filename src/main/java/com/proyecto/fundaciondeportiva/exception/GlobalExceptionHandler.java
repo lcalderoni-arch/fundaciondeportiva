@@ -16,6 +16,17 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    // ⭐ NUEVO: Manejador para ValidacionException
+    @ExceptionHandler(ValidacionException.class)
+    public ResponseEntity<ErrorResponse> handleValidacionException(ValidacionException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(), // ← Este mensaje viene del UsuarioService con detalles
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
     // Manejador para BadCredentialsException (login incorrecto)
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
@@ -30,21 +41,33 @@ public class GlobalExceptionHandler {
     // Manejador para ResourceNotFoundException
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage(), LocalDateTime.now());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
     // Manejador para EmailAlreadyExistsException
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
-        ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage(), LocalDateTime.now());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     // Manejador para InvalidCredentialsException
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException ex) {
-        ErrorResponse error = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), ex.getMessage(), LocalDateTime.now());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
@@ -71,6 +94,9 @@ public class GlobalExceptionHandler {
     // Manejador genérico para otras excepciones no controladas explícitamente
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        // ⭐ MEJORA: Imprimir stack trace para debugging
+        ex.printStackTrace();
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Ocurrió un error interno en el servidor",

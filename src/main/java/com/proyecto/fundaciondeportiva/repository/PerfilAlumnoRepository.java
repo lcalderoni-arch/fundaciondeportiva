@@ -9,13 +9,12 @@ import java.util.Optional;
 @Repository
 public interface PerfilAlumnoRepository extends JpaRepository<PerfilAlumno, Long> {
 
-    Optional<PerfilAlumno> findByDni(String dni);
-
-    Optional<PerfilAlumno> findByCodigoEstudiante(String codigoEstudiante);
+    boolean existsByDni(String dni);
 
     boolean existsByCodigoEstudiante(String codigoEstudiante);
 
-    // AÑADIDO: Método para verificar unicidad del DNI
-    boolean existsByDni(String dni);
+    // ⭐ NUEVO: Para obtener el perfil completo y dar mejor mensaje de error
+    Optional<PerfilAlumno> findByDni(String dni);
 
+    Optional<PerfilAlumno> findByCodigoEstudiante(String codigoEstudiante);
 }
