@@ -50,6 +50,8 @@ public class UsuarioInputDTO {
     private NivelAcademico nivel;
     private String grado;
 
+    @Size(max = 9, message = "Teléfono de emergencia no debe exceder 9 caracteres")
+    private String telefonoEmergencia;
     // ELIMINADO: private String carrera;
     // ELIMINADO: private String codigoEstudiante; (Se genera en el servicio)
     // ELIMINADO: private String departamento;

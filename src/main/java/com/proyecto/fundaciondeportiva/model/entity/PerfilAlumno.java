@@ -32,6 +32,10 @@ public class PerfilAlumno {
     @Column(length = 20, nullable = false)
     private String grado;
 
+    // NUEVO: Teléfono de emergencia
+    @Column(name = "telefono_emergencia", length = 9)
+    private String telefonoEmergencia;
+
     // Relación inversa 1:1 (opcional, pero útil)
     @OneToOne(mappedBy = "perfilAlumno")
     private Usuario usuario;

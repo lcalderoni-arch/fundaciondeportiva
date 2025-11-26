@@ -104,8 +104,8 @@ public class UsuarioService implements UserDetailsService {
             if (request.getDniAlumno() == null || request.getDniAlumno().isBlank()) {
                 throw new ValidacionException("El DNI es obligatorio para el alumno.");
             }
+
             if (perfilAlumnoRepository.existsByDni(request.getDniAlumno())) {
-                // Buscar el alumno con ese DNI para dar más info
                 PerfilAlumno perfilExistente = perfilAlumnoRepository.findByDni(request.getDniAlumno()).orElse(null);
                 if (perfilExistente != null && perfilExistente.getUsuario() != null) {
                     throw new ValidacionException(
@@ -118,11 +118,17 @@ public class UsuarioService implements UserDetailsService {
                     throw new ValidacionException("El DNI del alumno ya está registrado.");
                 }
             }
+
             if (request.getNivel() == null) {
                 throw new ValidacionException("El Nivel Académico es obligatorio para el alumno.");
             }
             if (request.getGrado() == null || request.getGrado().isBlank()) {
                 throw new ValidacionException("El Grado es obligatorio para el alumno.");
+            }
+
+            // NUEVA VALIDACIÓN: Teléfono de emergencia obligatorio
+            if (request.getTelefonoEmergencia() == null || request.getTelefonoEmergencia().isBlank()) {
+                throw new ValidacionException("El teléfono de emergencia es obligatorio para el alumno.");
             }
 
             // Generar código de estudiante si no se provee
@@ -141,6 +147,7 @@ public class UsuarioService implements UserDetailsService {
                     .nivel(request.getNivel())
                     .grado(request.getGrado())
                     .codigoEstudiante(codigoEstudiante)
+                    .telefonoEmergencia(request.getTelefonoEmergencia()) // NUEVO
                     .usuario(nuevoUsuario) // Vincula el perfil al usuario
                     .build();
             nuevoUsuario.setPerfilAlumno(perfil); // Vincula el usuario al perfil

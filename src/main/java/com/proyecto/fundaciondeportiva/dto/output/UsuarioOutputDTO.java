@@ -25,11 +25,12 @@ public class UsuarioOutputDTO {
     private Rol rol;
     private LocalDateTime fechaCreacion;
 
-    // AÑADIDO: DNI
+    // AÑADIDO: DNI; TELEFONO
     private String codigoEstudiante;
     private String dniAlumno;
     private NivelAcademico nivel;
     private String grado;
+    private String telefonoEmergencia; // NUEVO
 
     // CAMPO DE ALUMNO: 'grado' en lugar de 'carrera'
     private String dniProfesor;
@@ -60,6 +61,7 @@ public class UsuarioOutputDTO {
             dto.setDniAlumno(perfil.getDni()); // <-- USA EL SETTER CORRECTO
             dto.setNivel(perfil.getNivel());
             dto.setGrado(perfil.getGrado());
+            dto.setTelefonoEmergencia(perfil.getTelefonoEmergencia()); // NUEVO
         }
 
         // Mapea los campos de PerfilProfesor si existen
