@@ -28,7 +28,7 @@ public class SeccionRequestDTO {
 
     @NotBlank(message = "El grado de la sección es obligatorio")
     @Size(max = 20, message = "El grado no puede exceder 20 caracteres")
-    private String gradoSeccion; // Ej: "5to A", "3ro B"
+    private String gradoSeccion;
 
     @NotNull(message = "El turno es obligatorio")
     private Turno turno;
@@ -46,6 +46,12 @@ public class SeccionRequestDTO {
 
     @NotNull(message = "La fecha de fin es obligatoria")
     private LocalDate fechaFin;
+
+    // ⭐ NUEVO CAMPO: Número de semanas académicas
+    @NotNull(message = "El número de semanas es obligatorio")
+    @Min(value = 1, message = "Debe haber al menos 1 semana")
+    @Max(value = 52, message = "No puede exceder 52 semanas")
+    private Integer numeroSemanas;
 
     @NotNull(message = "El ID del curso es obligatorio")
     private Long cursoId;

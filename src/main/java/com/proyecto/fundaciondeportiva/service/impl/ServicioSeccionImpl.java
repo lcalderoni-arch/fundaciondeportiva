@@ -108,13 +108,20 @@ public class ServicioSeccionImpl implements ServicioSeccion {
                     .capacidad(request.getCapacidad())
                     .fechaInicio(request.getFechaInicio())
                     .fechaFin(request.getFechaFin())
+                    .numeroSemanas(request.getNumeroSemanas())
                     .activa(true)
                     .curso(curso)
                     .profesor(profesor)
                     .build();
 
+            // ⭐ GENERAR SEMANAS AUTOMÁTICAMENTE
+            logger.info("Generando {} semanas académicas...", request.getNumeroSemanas());
+            nuevaSeccion.generarSemanas();
+            logger.info("Semanas generadas exitosamente");
+
             Seccion seccionGuardada = seccionRepository.save(nuevaSeccion);
             logger.info("Sección creada exitosamente con ID: {}", seccionGuardada.getId());
+            logger.info("Total de semanas generadas: {}", seccionGuardada.getSemanas().size());
 
             return SeccionResponseDTO.deEntidad(seccionGuardada);
 
@@ -161,6 +168,15 @@ public class ServicioSeccionImpl implements ServicioSeccion {
             seccionExistente.setFechaFin(request.getFechaFin());
             seccionExistente.setCurso(curso);
             seccionExistente.setProfesor(profesor);
+
+            // ⭐ Si cambió el número de semanas, regenerar
+            if (!seccionExistente.getNumeroSemanas().equals(request.getNumeroSemanas())) {
+                logger.info("Número de semanas cambió de {} a {}. Regenerando semanas...",
+                        seccionExistente.getNumeroSemanas(), request.getNumeroSemanas());
+                seccionExistente.setNumeroSemanas(request.getNumeroSemanas());
+                seccionExistente.generarSemanas();
+                logger.info("Semanas regeneradas exitosamente");
+            }
 
             Seccion seccionActualizada = seccionRepository.save(seccionExistente);
             logger.info("Sección actualizada exitosamente: {}", seccionActualizada.getId());
