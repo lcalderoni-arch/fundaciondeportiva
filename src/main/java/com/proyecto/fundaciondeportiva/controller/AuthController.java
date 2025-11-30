@@ -61,10 +61,9 @@ public class AuthController {
 
         // ⭐ NUEVO: Obtener DNI solo si es profesor
         String dni = null;
-        /*
         if (usuario.getRol() == Rol.PROFESOR && usuario.getPerfilProfesor() != null) {
             dni = usuario.getPerfilProfesor().getDni();
-        } */
+        }
 
         // 4. Creamos y devolvemos la respuesta
         LoginOutputDTO responseBody = LoginOutputDTO.builder()
