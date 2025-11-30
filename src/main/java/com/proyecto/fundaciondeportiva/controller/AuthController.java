@@ -20,14 +20,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -43,59 +38,44 @@ public class AuthController {
             @Valid @RequestBody LoginInputDTO loginInputDTO,
             HttpServletResponse response
     ) {
-        try {
-            // 1. Spring Security autentica al usuario
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginInputDTO.getEmail(), loginInputDTO.getPassword())
-            );
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        // 1. Spring Security autentica al usuario
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginInputDTO.getEmail(), loginInputDTO.getPassword())
+        );
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-            // 2. Buscamos los datos completos del usuario para la respuesta
-            Usuario usuario = usuarioRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        // 2. Buscamos los datos completos del usuario para la respuesta
+        Usuario usuario = usuarioRepository.findByEmail(userDetails.getUsername()).orElseThrow();
 
-            // 3. Generamos el token JWT
-            String token = jwtService.generateToken(userDetails);
+        // 3. Generamos el token JWT
+        String token = jwtService.generateToken(userDetails);
 
-            // 4a. Crear la cookie
-            Cookie jwtCookie = new Cookie("jwt_token", token);
-            jwtCookie.setHttpOnly(true);
-            jwtCookie.setSecure(true);
-            jwtCookie.setPath("/");
-            jwtCookie.setMaxAge(60 * 60 * 10);
+        // 4a. Crear la cookie
+        Cookie jwtCookie = new Cookie("jwt_token", token);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(true);
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(60 * 60 * 10);
 
-            response.addCookie(jwtCookie);
+        response.addCookie(jwtCookie);
 
-            // ⭐ CORREGIDO: Obtener DNI solo si es profesor CON MANEJO DE ERRORES
-            String dni = null;
-            try {
-                if (usuario.getRol() == Rol.PROFESOR) {
-                    // Buscar perfil de profesor de forma segura
-                    if (usuario.getPerfilProfesor() != null) {
-                        dni = usuario.getPerfilProfesor().getDni();
-                    } else {
-                        logger.warn("El profesor {} no tiene perfil asociado", usuario.getEmail());
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("Error al obtener DNI del profesor: {}", e.getMessage());
-                // Continuar sin DNI en lugar de fallar todo el login
-            }
+        // ⭐ NUEVO: Obtener DNI solo si es profesor
+        String dni = null;
+        /*
+        if (usuario.getRol() == Rol.PROFESOR && usuario.getPerfilProfesor() != null) {
+            dni = usuario.getPerfilProfesor().getDni();
+        } */
 
-            // 4. Creamos y devolvemos la respuesta
-            LoginOutputDTO responseBody = LoginOutputDTO.builder()
-                    .token(token)
-                    .nombre(usuario.getNombre())
-                    .rol(usuario.getRol())
-                    .email(usuario.getEmail())
-                    .dni(dni)
-                    .build();
+        // 4. Creamos y devolvemos la respuesta
+        LoginOutputDTO responseBody = LoginOutputDTO.builder()
+                .token(token)
+                .nombre(usuario.getNombre())
+                .rol(usuario.getRol())
+                .email(usuario.getEmail()) // ⭐ NUEVO
+                .dni(dni) // ⭐ NUEVO
+                .build();
 
-            return ResponseEntity.ok(responseBody);
-
-        } catch (Exception e) {
-            logger.error("Error en login: ", e);
-            throw e;
-        }
+        return ResponseEntity.ok(responseBody);
     }
 
     @PostMapping("/logout")
