@@ -35,7 +35,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // ⭐ NUEVO: Saltar OPTIONS (preflight) sin validar token
+        // ⭐ CRÍTICO: Ignorar rutas públicas COMPLETAMENTE
+        String path = request.getRequestURI();
+        if (path.startsWith("/api/auth/") || path.startsWith("/api/usuarios/crear")) {
+            filterChain.doFilter(request, response);
+            return; // ⭐ NO procesar JWT para estas rutas
+        }
+
+        // ⭐ Saltar OPTIONS (preflight) sin validar token
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -83,12 +90,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // ⭐ MODIFICADO: Solo loguear, NO bloquear la petición
+            // Solo loguear, NO bloquear la petición
             logger.warn("Error al procesar el token JWT: " + e.getMessage());
-            // Dejar que Spring Security maneje la falta de autenticación
         }
 
-        // ⭐ IMPORTANTE: SIEMPRE continuar con el chain
+        // SIEMPRE continuar con el chain
         filterChain.doFilter(request, response);
     }
 
