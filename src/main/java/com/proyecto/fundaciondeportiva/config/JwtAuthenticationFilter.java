@@ -37,9 +37,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // ⭐ CRÍTICO: Ignorar rutas públicas COMPLETAMENTE
         String path = request.getRequestURI();
+
+        logger.info("🔍 JwtFilter procesando: " + path);
+
         if (path.startsWith("/api/auth/") || path.startsWith("/api/usuarios/crear")) {
+            logger.info("✅ Ruta pública detectada, saltando JWT: " + path);
             filterChain.doFilter(request, response);
-            return; // ⭐ NO procesar JWT para estas rutas
+            return;
         }
 
         // ⭐ Saltar OPTIONS (preflight) sin validar token
