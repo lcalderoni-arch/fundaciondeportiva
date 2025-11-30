@@ -59,10 +59,26 @@ public class AuthController {
 
         response.addCookie(jwtCookie);
 
-        // ⭐ NUEVO: Obtener DNI solo si es profesor
         String dni = null;
+        String nivelAlumno = null;
+        String gradoAlumno = null;
+
+        // Si es PROFESOR, obtenemos DNI del perfil profesor (como ya lo tenías)
         if (usuario.getRol() == Rol.PROFESOR && usuario.getPerfilProfesor() != null) {
             dni = usuario.getPerfilProfesor().getDni();
+        }
+
+        // ⭐ SI ES ALUMNO, sacamos NIVEL y GRADO del PerfilAlumno
+        if (usuario.getRol() == Rol.ALUMNO && usuario.getPerfilAlumno() != null) {
+            // si quieres también puedes mandar el dni del alumno:
+            // dni = usuario.getPerfilAlumno().getDni();
+
+            // Si 'nivel' es un enum, .name() te devolverá "INICIAL", "PRIMARIA", etc.
+            nivelAlumno = usuario.getPerfilAlumno().getNivel() != null
+                    ? usuario.getPerfilAlumno().getNivel().name()
+                    : null;
+
+            gradoAlumno = usuario.getPerfilAlumno().getGrado();
         }
 
         // 4. Creamos y devolvemos la respuesta
@@ -70,8 +86,10 @@ public class AuthController {
                 .token(token)
                 .nombre(usuario.getNombre())
                 .rol(usuario.getRol())
-                .email(usuario.getEmail()) // ⭐ NUEVO
-                .dni(dni) // ⭐ NUEVO
+                .email(usuario.getEmail())
+                .dni(dni)
+                .nivelAlumno(nivelAlumno)   // ⭐ NUEVO
+                .gradoAlumno(gradoAlumno)   // ⭐ NUEVO
                 .build();
 
         return ResponseEntity.ok(responseBody);

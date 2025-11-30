@@ -17,4 +17,7 @@ public class LoginOutputDTO {
     private Rol rol;
     private String email; // NUEVO
     private String dni;   // NUEVO (solo para profesores, null para otros roles)
+
+    private String nivelAlumno;
+    private String gradoAlumno;
 }
