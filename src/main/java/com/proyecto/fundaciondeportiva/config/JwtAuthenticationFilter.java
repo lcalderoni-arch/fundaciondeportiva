@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         logger.info("🔍 JwtFilter procesando: " + path);
 
-        if (path.startsWith("/api/auth/") || path.startsWith("/api/usuarios/crear")) {
+        if (path.startsWith("/api/auth/")) {
             logger.info("✅ Ruta pública detectada, saltando JWT: " + path);
             filterChain.doFilter(request, response);
             return;
