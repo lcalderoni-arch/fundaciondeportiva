@@ -203,6 +203,20 @@ public class SeccionController {
         }
     }
 
+    @GetMapping("/profesor/dni/{dni}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<SeccionResponseDTO>> listarSeccionesPorDniProfesor(@PathVariable String dni) {
+        try {
+            logger.info("Solicitud de secciones del profesor con DNI: {}", dni);
+            List<SeccionResponseDTO> secciones = servicioSeccion.listarSeccionesPorDniProfesor(dni);
+            logger.info("Se encontraron {} secciones para el profesor con DNI: {}", secciones.size(), dni);
+            return ResponseEntity.ok(secciones);
+        } catch (Exception e) {
+            logger.error("Error en endpoint listarSeccionesPorDniProfesor", e);
+            throw e;
+        }
+    }
+
     @GetMapping("/turno/{turno}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<SeccionResponseDTO>> listarSeccionesPorTurno(@PathVariable Turno turno) {
