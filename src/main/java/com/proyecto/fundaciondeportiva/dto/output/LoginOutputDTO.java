@@ -15,4 +15,6 @@ public class LoginOutputDTO {
     private String token; // El JWT que usará el cliente
     private String nombre;
     private Rol rol;
+    private String email; // NUEVO
+    private String dni;   // NUEVO (solo para profesores, null para otros roles)
 }

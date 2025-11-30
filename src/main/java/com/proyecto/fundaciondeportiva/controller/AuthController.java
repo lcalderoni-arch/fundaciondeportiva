@@ -3,6 +3,7 @@ package com.proyecto.fundaciondeportiva.controller;
 import com.proyecto.fundaciondeportiva.dto.input.LoginInputDTO;
 import com.proyecto.fundaciondeportiva.dto.output.LoginOutputDTO;
 import com.proyecto.fundaciondeportiva.model.entity.Usuario;
+import com.proyecto.fundaciondeportiva.model.enums.Rol; // ⭐ AGREGAR ESTA LÍNEA
 import com.proyecto.fundaciondeportiva.repository.UsuarioRepository;
 import com.proyecto.fundaciondeportiva.service.JwtService;
 import jakarta.servlet.http.Cookie;
@@ -58,11 +59,19 @@ public class AuthController {
 
         response.addCookie(jwtCookie);
 
+        // ⭐ NUEVO: Obtener DNI solo si es profesor
+        String dni = null;
+        if (usuario.getRol() == Rol.PROFESOR && usuario.getPerfilProfesor() != null) {
+            dni = usuario.getPerfilProfesor().getDni();
+        }
+
         // 4. Creamos y devolvemos la respuesta
         LoginOutputDTO responseBody = LoginOutputDTO.builder()
                 .token(token)
                 .nombre(usuario.getNombre())
                 .rol(usuario.getRol())
+                .email(usuario.getEmail()) // ⭐ NUEVO
+                .dni(dni) // ⭐ NUEVO
                 .build();
 
         return ResponseEntity.ok(responseBody);
