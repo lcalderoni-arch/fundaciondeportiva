@@ -2,10 +2,7 @@ package com.proyecto.fundaciondeportiva.model.entity;
 
 import com.proyecto.fundaciondeportiva.model.enums.NivelAcademico;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @Builder
@@ -38,5 +35,6 @@ public class PerfilAlumno {
 
     // Relación inversa 1:1 (opcional, pero útil)
     @OneToOne(mappedBy = "perfilAlumno")
+    @EqualsAndHashCode.Exclude
     private Usuario usuario;
 }
