@@ -2,23 +2,19 @@ package com.proyecto.fundaciondeportiva.model.entity;
 
 import com.proyecto.fundaciondeportiva.model.enums.NivelAcademico;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter // Cambio de @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "cursos", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "codigo")
-})
+@Table(name = "cursos", uniqueConstraints = { @UniqueConstraint(columnNames = "codigo") })
 public class Curso {
 
     @Id
@@ -38,19 +34,16 @@ public class Curso {
     @Column(name = "nivel_destino", nullable = false)
     private NivelAcademico nivelDestino;
 
-    // 🚨 CAMPO ELIMINADO (basado en tu solicitud)
-    // @Column(name = "grado_destino", length = 20, nullable = false)
-    // private String gradoDestino;
-
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false, nullable = false)
     private LocalDateTime fechaCreacion;
 
-    // --- Relaciones ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creado_por", nullable = false)
+    @ToString.Exclude // 👈 Evitar ciclo con Usuario
     private Usuario creadoPor;
 
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude // 👈 Evitar ciclo con Seccion
     private Set<Seccion> secciones;
 }

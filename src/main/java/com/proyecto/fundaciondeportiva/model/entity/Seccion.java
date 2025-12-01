@@ -3,10 +3,7 @@ package com.proyecto.fundaciondeportiva.model.entity;
 import com.proyecto.fundaciondeportiva.model.enums.NivelAcademico;
 import com.proyecto.fundaciondeportiva.model.enums.Turno;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
@@ -20,7 +17,8 @@ import java.util.Set;
  * Entidad 'secciones'.
  * Representa una instancia real de un curso en un periodo específico.
  */
-@Data
+@Getter // Reemplaza @Data
+@Setter // Reemplaza @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -64,7 +62,6 @@ public class Seccion {
     @Column(name = "fecha_fin", nullable = false)
     private LocalDate fechaFin;
 
-    // ⭐ NUEVO CAMPO: Número de semanas académicas
     @Column(name = "numero_semanas", nullable = false)
     @Builder.Default
     private Integer numeroSemanas = 0;
@@ -80,65 +77,50 @@ public class Seccion {
     // --- Relaciones ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curso_id", nullable = false)
+    @ToString.Exclude // 👈 ¡ESTO EVITA EL ERROR 500!
     private Curso curso;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profesor_id", nullable = false)
+    @ToString.Exclude // 👈 ¡ESTO TAMBIÉN!
     private Usuario profesor;
 
     @OneToMany(mappedBy = "seccion", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @ToString.Exclude // 👈 IMPORTANTE EN LISTAS
     private Set<Matricula> matriculas = new HashSet<>();
 
     @OneToMany(mappedBy = "seccion", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @ToString.Exclude
     private Set<Sesion> sesiones = new HashSet<>();
 
-    // ⭐ NUEVA RELACIÓN: One-to-Many con SemanaSemana
     @OneToMany(mappedBy = "seccion", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("numero ASC")
     @Builder.Default
+    @ToString.Exclude
     private List<SemanaSemana> semanas = new ArrayList<>();
 
     // --- Métodos de utilidad existentes ---
 
-    /**
-     * Retorna el número actual de estudiantes matriculados
-     */
     public int getNumeroEstudiantesMatriculados() {
         return matriculas != null ? matriculas.size() : 0;
     }
 
-    /**
-     * Verifica si la sección tiene cupo disponible
-     */
     public boolean tieneCupoDisponible() {
         return getNumeroEstudiantesMatriculados() < capacidad;
     }
 
-    /**
-     * Verifica si la sección está en el periodo activo
-     */
     public boolean estaEnPeriodoActivo() {
         LocalDate hoy = LocalDate.now();
         return !hoy.isBefore(fechaInicio) && !hoy.isAfter(fechaFin);
     }
 
-    // ⭐ NUEVOS MÉTODOS: Para gestionar semanas
-
-    /**
-     * Agrega una semana a la sección
-     */
     public void agregarSemana(SemanaSemana semana) {
         semanas.add(semana);
         semana.setSeccion(this);
     }
 
-    /**
-     * Genera automáticamente las semanas académicas basándose en:
-     * - fechaInicio
-     * - numeroSemanas
-     */
     public void generarSemanas() {
         this.semanas.clear();
         LocalDate fechaActual = this.fechaInicio;
@@ -153,26 +135,7 @@ public class Seccion {
                     .build();
 
             this.agregarSemana(semana);
-            fechaActual = fechaActual.plusWeeks(1); // Avanzar a la siguiente semana
+            fechaActual = fechaActual.plusWeeks(1);
         }
-    }
-
-    /**
-     * Obtiene la semana actual basándose en la fecha de hoy
-     */
-    public SemanaSemana getSemanaActual() {
-        LocalDate hoy = LocalDate.now();
-        return semanas.stream()
-                .filter(s -> !hoy.isBefore(s.getFechaInicio()) && !hoy.isAfter(s.getFechaFin()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    /**
-     * Obtiene el número de la semana actual (0 si no está en periodo)
-     */
-    public Integer getNumeroSemanaActual() {
-        SemanaSemana semanaActual = getSemanaActual();
-        return semanaActual != null ? semanaActual.getNumero() : 0;
     }
 }
