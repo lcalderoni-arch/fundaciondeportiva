@@ -1,24 +1,22 @@
 package com.proyecto.fundaciondeportiva.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.proyecto.fundaciondeportiva.model.enums.NivelAcademico;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = "usuario")
 @Entity
 @Table(name = "perfiles_alumno")
 public class PerfilAlumno {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(name = "codigo_estudiante", length = 20)
@@ -38,8 +36,7 @@ public class PerfilAlumno {
     @Column(name = "telefono_emergencia", length = 9)
     private String telefonoEmergencia;
 
-    // Relación inversa 1:1
+    // Relación inversa 1:1 (opcional, pero útil)
     @OneToOne(mappedBy = "perfilAlumno")
-    @JsonIgnore // evita ciclos al serializar
     private Usuario usuario;
 }

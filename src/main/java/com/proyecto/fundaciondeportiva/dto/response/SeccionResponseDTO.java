@@ -60,8 +60,77 @@ public class SeccionResponseDTO {
             return null;
         }
 
-        int estudiantesMatriculados = seccion.getNumeroEstudiantesMatriculados();
-        int cuposDisponibles = seccion.getCapacidad() - estudiantesMatriculados;
+        // --- Estadísticas de alumnos / cupos ---
+        Integer numEst = seccion.getNumeroEstudiantesMatriculados();
+        int estudiantesMatriculados = (numEst != null) ? numEst : 0;
+
+        Integer cap = seccion.getCapacidad();
+        int capacidad = (cap != null) ? cap : 0;
+
+        int cuposDisponibles = Math.max(capacidad - estudiantesMatriculados, 0);
+
+        // --- Curso (puede ser null en datos viejos / inconsistentes) ---
+        Long cursoId = null;
+        String codigoCurso = null;
+        String tituloCurso = null;
+        NivelAcademico nivelCurso = null;
+
+        if (seccion.getCurso() != null) {
+            cursoId = seccion.getCurso().getId();
+            codigoCurso = seccion.getCurso().getCodigo();
+            tituloCurso = seccion.getCurso().getTitulo();
+            nivelCurso = seccion.getCurso().getNivelDestino();
+        }
+
+        // --- Profesor (también puede ser null) ---
+        Long profesorId = null;
+        String nombreProfesor = null;
+        String dniProfesor = null;
+
+        if (seccion.getProfesor() != null) {
+            profesorId = seccion.getProfesor().getId();
+            nombreProfesor = seccion.getProfesor().getNombre();
+
+            if (seccion.getProfesor().getPerfilProfesor() != null) {
+                dniProfesor = seccion.getProfesor().getPerfilProfesor().getDni();
+            } else {
+                dniProfesor = "N/A";
+            }
+        }
+
+        // --- Semanas ---
+        Integer numeroSemanas = seccion.getNumeroSemanas(); // puede ser null
+        int totalSemanas = 0;
+        if (seccion.getSemanas() != null) {
+            totalSemanas = seccion.getSemanas().size();
+        }
+
+        Integer semanaActual = null;
+        try {
+            semanaActual = seccion.getNumeroSemanaActual();
+        } catch (Exception e) {
+            // por si internamente asume algo que aún no existe
+            semanaActual = 0;
+        }
+
+        // --- Estado / flags ---
+        Boolean activa = seccion.getActiva();
+        Boolean activaSafe = (activa != null) ? activa : Boolean.TRUE;
+
+        Boolean tieneCupo = null;
+        Boolean enPeriodoActivo = null;
+
+        try {
+            tieneCupo = seccion.tieneCupoDisponible();
+        } catch (Exception e) {
+            tieneCupo = capacidad > estudiantesMatriculados;
+        }
+
+        try {
+            enPeriodoActivo = seccion.estaEnPeriodoActivo();
+        } catch (Exception e) {
+            enPeriodoActivo = false;
+        }
 
         return SeccionResponseDTO.builder()
                 .id(seccion.getId())
@@ -71,30 +140,33 @@ public class SeccionResponseDTO {
                 .gradoSeccion(seccion.getGradoSeccion())
                 .turno(seccion.getTurno())
                 .aula(seccion.getAula())
-                .capacidad(seccion.getCapacidad())
+                .capacidad(capacidad)
                 .fechaInicio(seccion.getFechaInicio())
                 .fechaFin(seccion.getFechaFin())
-                .numeroSemanas(seccion.getNumeroSemanas()) // ⭐ NUEVO
-                .activa(seccion.getActiva())
+                .numeroSemanas(numeroSemanas)
+                .activa(activaSafe)
                 .fechaCreacion(seccion.getFechaCreacion())
+
                 // Curso
-                .cursoId(seccion.getCurso().getId())
-                .codigoCurso(seccion.getCurso().getCodigo())
-                .tituloCurso(seccion.getCurso().getTitulo())
-                .nivelCurso(seccion.getCurso().getNivelDestino())
+                .cursoId(cursoId)
+                .codigoCurso(codigoCurso)
+                .tituloCurso(tituloCurso)
+                .nivelCurso(nivelCurso)
+
                 // Profesor
-                .profesorId(seccion.getProfesor().getId())
-                .nombreProfesor(seccion.getProfesor().getNombre())
-                .dniProfesor(seccion.getProfesor().getPerfilProfesor() != null ?
-                        seccion.getProfesor().getPerfilProfesor().getDni() : "N/A")
+                .profesorId(profesorId)
+                .nombreProfesor(nombreProfesor)
+                .dniProfesor(dniProfesor)
+
                 // Estadísticas
                 .estudiantesMatriculados(estudiantesMatriculados)
                 .cuposDisponibles(cuposDisponibles)
-                .tieneCupo(seccion.tieneCupoDisponible())
-                .enPeriodoActivo(seccion.estaEnPeriodoActivo())
-                // ⭐ NUEVAS ESTADÍSTICAS DE SEMANAS
-                .semanaActual(seccion.getNumeroSemanaActual())
-                .totalSemanas(seccion.getSemanas().size())
+                .tieneCupo(tieneCupo)
+                .enPeriodoActivo(enPeriodoActivo)
+
+                // Semanas
+                .semanaActual(semanaActual)
+                .totalSemanas(totalSemanas)
                 .build();
     }
 }
