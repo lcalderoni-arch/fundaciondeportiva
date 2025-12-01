@@ -138,4 +138,23 @@ public class Seccion {
             fechaActual = fechaActual.plusWeeks(1);
         }
     }
+
+    public SemanaSemana getSemanaActual() {
+        LocalDate hoy = LocalDate.now();
+        if (semanas == null) return null; // Validación extra por seguridad
+
+        return semanas.stream()
+                .filter(s -> !hoy.isBefore(s.getFechaInicio()) && !hoy.isAfter(s.getFechaFin()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Obtiene el número de la semana actual (0 si no está en periodo)
+     */
+    public Integer getNumeroSemanaActual() {
+        SemanaSemana semanaActual = getSemanaActual();
+        return semanaActual != null ? semanaActual.getNumero() : 0;
+    }
+
 }
