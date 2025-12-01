@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -71,12 +72,32 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
                 throw new ValidacionException("La sección ya ha finalizado. No se pueden aceptar nuevas matrículas.");
             }
 
-            // 4. Validar que el alumno no esté ya matriculado
-            if (matriculaRepository.existsByAlumnoIdAndSeccionId(alumnoId, request.getSeccionId())) {
-                throw new ValidacionException("Ya estás matriculado en esta sección");
+            // ⭐ 4. LÓGICA DE REACTIVACIÓN (CORREGIDO)
+            // En lugar de solo verificar si existe, buscamos el registro
+            Optional<Matricula> matriculaExistente = matriculaRepository.findByAlumnoIdAndSeccionId(alumnoId, request.getSeccionId());
+
+            if (matriculaExistente.isPresent()) {
+                Matricula matricula = matriculaExistente.get();
+
+                // Si ya está ACTIVA (o INSCRITA), lanzamos error
+                if (matricula.getEstado() == EstadoMatricula.ACTIVA || matricula.getEstado() == EstadoMatricula.ACTIVA) {
+                    throw new ValidacionException("Ya estás matriculado en esta sección");
+                }
+
+                // Si estaba RETIRADA o CANCELADA, la REACTIVAMOS
+                logger.info("Reactivando matrícula previamente retirada para el alumno ID: {}", alumnoId);
+
+                matricula.setEstado(EstadoMatricula.ACTIVA); // O EstadoMatricula.INSCRITA según tu Enum
+                matricula.setFechaMatricula(LocalDateTime.now()); // Actualizamos fecha de ingreso
+                matricula.setFechaRetiro(null); // Borramos fecha de retiro
+                matricula.setObservaciones(request.getObservaciones()); // Actualizamos observaciones si hay
+
+                Matricula matriculaReactivada = matriculaRepository.save(matricula);
+                return MatriculaResponseDTO.deEntidad(matriculaReactivada);
             }
 
-            // 5. Validar que haya cupo disponible
+            // ⭐ 5. Validar que haya cupo disponible (Solo si es nueva matrícula)
+            // Nota: Si reactivamos (arriba), técnicamente recupera su cupo, pero si es nueva validamos aquí.
             long matriculasActivas = matriculaRepository.countMatriculasActivasBySeccionId(request.getSeccionId());
             if (matriculasActivas >= seccion.getCapacidad()) {
                 throw new ValidacionException("La sección ha alcanzado su capacidad máxima. No hay cupos disponibles.");
@@ -90,11 +111,11 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
                 );
             }
 
-            // 7. Crear la matrícula
+            // 7. Crear la matrícula (SOLO SI NO EXISTÍA PREVIAMENTE)
             Matricula nuevaMatricula = Matricula.builder()
                     .alumno(alumno)
                     .seccion(seccion)
-                    .estado(EstadoMatricula.ACTIVA)
+                    .estado(EstadoMatricula.ACTIVA) // O INSCRITA
                     .observaciones(request.getObservaciones())
                     .build();
 
