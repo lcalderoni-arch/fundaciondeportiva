@@ -2,6 +2,8 @@ package com.proyecto.fundaciondeportiva.model.entity;
 
 import com.proyecto.fundaciondeportiva.model.enums.NivelAcademico;
 import com.proyecto.fundaciondeportiva.model.enums.Turno;
+import com.proyecto.fundaciondeportiva.model.enums.EstadoMatricula;
+
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -104,7 +106,12 @@ public class Seccion {
     // --- Métodos de utilidad existentes ---
 
     public int getNumeroEstudiantesMatriculados() {
-        return matriculas != null ? matriculas.size() : 0;
+        if (matriculas == null) return 0;
+
+        // Filtramos para contar solo los que tienen estado ACTIVA
+        return (int) matriculas.stream()
+                .filter(m -> m.getEstado() == EstadoMatricula.ACTIVA)
+                .count();
     }
 
     public boolean tieneCupoDisponible() {
