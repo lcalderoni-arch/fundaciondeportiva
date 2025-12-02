@@ -16,6 +16,7 @@ public class ConfiguracionMatricula {
     private Long id;
 
     // true = se permite matricular / false = matrículas bloqueadas
+    @Builder.Default
     @Column(name = "matricula_habilitada", nullable = false)
     private boolean matriculaHabilitada = true;
 }

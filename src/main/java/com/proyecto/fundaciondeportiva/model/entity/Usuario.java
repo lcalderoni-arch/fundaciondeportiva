@@ -43,6 +43,7 @@ public class Usuario implements UserDetails {
     private Rol rol;
 
     // 👇 NUEVO: flag para habilitar/bloquear matrícula
+    @Builder.Default
     @Column(name = "habilitado_matricula", nullable = false)
     private Boolean habilitadoMatricula = true;
 

@@ -34,7 +34,7 @@ public class ConfiguracionMatriculaController {
             @RequestBody CambiarPermisoMatriculaRequest request) {
 
         ConfiguracionMatricula confActualizada =
-                configuracionMatriculaService.actualizarEstadoMatricula(request.isHabilitada());
+                configuracionMatriculaService.actualizarEstadoMatricula(request.isHabilitado());
 
         return ResponseEntity.ok(ConfiguracionMatriculaResponse.deEntidad(confActualizada));
     }
