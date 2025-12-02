@@ -1,7 +1,11 @@
 package com.proyecto.fundaciondeportiva.dto.response;
 
-import com.proyecto.fundaciondeportiva.model.entity.ConfiguracionMatricula;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -9,13 +13,9 @@ import lombok.*;
 @AllArgsConstructor
 public class ConfiguracionMatriculaResponse {
 
-    // nombre pensado para el front, AJUSTA si quieres
     private boolean matriculaHabilitada;
 
-    public static ConfiguracionMatriculaResponse deEntidad(ConfiguracionMatricula entidad) {
-        if (entidad == null) return null;
-        return ConfiguracionMatriculaResponse.builder()
-                .matriculaHabilitada(entidad.isMatriculaHabilitada())
-                .build();
-    }
+    // ⭐ NUEVO: fechas de inicio y fin
+    private LocalDate fechaInicio;
+    private LocalDate fechaFin;
 }

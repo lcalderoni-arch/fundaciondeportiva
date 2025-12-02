@@ -3,6 +3,8 @@ package com.proyecto.fundaciondeportiva.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,4 +21,11 @@ public class ConfiguracionMatricula {
     @Builder.Default
     @Column(name = "matricula_habilitada", nullable = false)
     private boolean matriculaHabilitada = true;
+
+    // ⭐ NUEVO: rango de fechas de matrícula (opcional)
+    @Column(name = "fecha_inicio")
+    private LocalDate fechaInicio;
+
+    @Column(name = "fecha_fin")
+    private LocalDate fechaFin;
 }
