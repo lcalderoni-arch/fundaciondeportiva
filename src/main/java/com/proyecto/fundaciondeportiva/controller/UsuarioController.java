@@ -3,6 +3,7 @@ package com.proyecto.fundaciondeportiva.controller;
 import com.proyecto.fundaciondeportiva.dto.input.UsuarioInputDTO;
 import com.proyecto.fundaciondeportiva.dto.output.UsuarioUpdateDTO;
 import com.proyecto.fundaciondeportiva.dto.output.UsuarioOutputDTO;
+import com.proyecto.fundaciondeportiva.dto.request.CambiarPermisoMatriculaRequest;
 import com.proyecto.fundaciondeportiva.model.entity.Usuario;
 import com.proyecto.fundaciondeportiva.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -65,7 +66,7 @@ public class UsuarioController {
     }
 
     @GetMapping(value = "/alumnos", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMINISTRADOR')") // o hasAnyRole('ADMINISTRADOR','PROFESOR') si quieres
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<UsuarioOutputDTO>> listarAlumnos() {
         List<Usuario> alumnos = usuarioService.listarAlumnos();
 
@@ -89,5 +90,21 @@ public class UsuarioController {
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
         usuarioService.eliminarUsuario(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ⭐ NUEVO ENDPOINT: cambiar permiso de matrícula de un alumno
+    @PatchMapping(
+            value = "/{id}/permiso-matricula",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<UsuarioOutputDTO> actualizarPermisoMatricula(
+            @PathVariable Long id,
+            @RequestBody CambiarPermisoMatriculaRequest request
+    ) {
+        Usuario usuarioActualizado = usuarioService.actualizarPermisoMatricula(id, request.isHabilitado());
+        UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(usuarioActualizado);
+        return ResponseEntity.ok(outputDTO);
     }
 }

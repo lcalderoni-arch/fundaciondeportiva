@@ -49,13 +49,6 @@ public class UsuarioService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
 
     // --- 1. Lógica de Seguridad (Implementación de UserDetailsService) ---
-    /**
-     * Este método es llamado por JwtAuthenticationFilter.
-     * Carga el usuario (nuestra NUEVA entidad Usuario) desde la BD.
-     * La entidad 'Usuario' (del nuevo modelo) ya implementa 'UserDetails',
-     * por lo que podemos devolverla directamente.
-     */
-
     @Transactional(readOnly = true)
     public List<Usuario> listarAlumnos() {
         return usuarioRepository.findByRol(Rol.ALUMNO);
@@ -64,25 +57,17 @@ public class UsuarioService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // 🚨 CAMBIO: Devolvemos nuestra entidad 'Usuario' directamente.
-        // Esto reemplaza tu lógica antigua de 'User.builder()'
         return usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
     }
 
     // --- 2. Lógica de Negocio (CRUD del Admin) ---
 
-    /**
-     * Registra un nuevo usuario (Admin, Profesor o Alumno) en el sistema.
-     * 🚨 CAMBIO: AHORA USA EL NUEVO DTO 'UsuarioInputDTO'
-     * 🚨 CAMBIO: Ahora devuelve la ENTIDAD Usuario (para ser compatible con tu controller)
-     */
     @Transactional
     public Usuario crearUsuario(UsuarioInputDTO request) {
 
         // --- 1. Validación de Email (MEJORADA) ---
         if (usuarioRepository.existsByEmail(request.getEmail())) {
-            // Buscar el usuario con ese email para dar más info
             Usuario usuarioExistente = usuarioRepository.findByEmail(request.getEmail()).orElse(null);
             if (usuarioExistente != null) {
                 throw new ValidacionException(
@@ -102,11 +87,11 @@ public class UsuarioService implements UserDetailsService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .rol(request.getRol())
+                // opcional: habilitarMatricula por defecto para alumnos
                 .build();
 
         // --- 2. Lógica de Perfiles (basada en el diagrama PlantUML) ---
         if (request.getRol() == Rol.ALUMNO) {
-            // Validaciones de Alumno
             if (request.getDniAlumno() == null || request.getDniAlumno().isBlank()) {
                 throw new ValidacionException("El DNI es obligatorio para el alumno.");
             }
@@ -132,12 +117,10 @@ public class UsuarioService implements UserDetailsService {
                 throw new ValidacionException("El Grado es obligatorio para el alumno.");
             }
 
-            // NUEVA VALIDACIÓN: Teléfono de emergencia obligatorio
             if (request.getTelefonoEmergencia() == null || request.getTelefonoEmergencia().isBlank()) {
                 throw new ValidacionException("El teléfono de emergencia es obligatorio para el alumno.");
             }
 
-            // Generar código de estudiante si no se provee
             String codigoEstudiante = request.getCodigoEstudiante();
             if (codigoEstudiante == null || codigoEstudiante.isBlank()) {
                 codigoEstudiante = generarCodigoEstudianteUnico();
@@ -147,24 +130,21 @@ public class UsuarioService implements UserDetailsService {
                 );
             }
 
-            // Crear y asociar el perfil
             PerfilAlumno perfil = PerfilAlumno.builder()
                     .dni(request.getDniAlumno())
                     .nivel(request.getNivel())
                     .grado(request.getGrado())
                     .codigoEstudiante(codigoEstudiante)
-                    .telefonoEmergencia(request.getTelefonoEmergencia()) // NUEVO
-                    .usuario(nuevoUsuario) // Vincula el perfil al usuario
+                    .telefonoEmergencia(request.getTelefonoEmergencia())
+                    .usuario(nuevoUsuario)
                     .build();
-            nuevoUsuario.setPerfilAlumno(perfil); // Vincula el usuario al perfil
+            nuevoUsuario.setPerfilAlumno(perfil);
 
         } else if (request.getRol() == Rol.PROFESOR) {
-            // Validaciones de Profesor
             if (request.getDniProfesor() == null || request.getDniProfesor().isBlank()) {
                 throw new ValidacionException("El DNI es obligatorio para el profesor.");
             }
             if (perfilProfesorRepository.existsByDni(request.getDniProfesor())) {
-                // Buscar el profesor con ese DNI para dar más info
                 PerfilProfesor perfilExistente = perfilProfesorRepository.findByDni(request.getDniProfesor()).orElse(null);
                 if (perfilExistente != null && perfilExistente.getUsuario() != null) {
                     throw new ValidacionException(
@@ -177,7 +157,6 @@ public class UsuarioService implements UserDetailsService {
                 }
             }
 
-            // Crear y asociar el perfil
             PerfilProfesor perfil = PerfilProfesor.builder()
                     .dni(request.getDniProfesor())
                     .telefono(request.getTelefono())
@@ -185,54 +164,36 @@ public class UsuarioService implements UserDetailsService {
                     .gradoAcademico(request.getGradoAcademico())
                     .usuario(nuevoUsuario)
                     .build();
-            nuevoUsuario.setPerfilProfesor(perfil); // Vincula el usuario al perfil
+            nuevoUsuario.setPerfilProfesor(perfil);
 
         } else if (request.getRol() == Rol.ADMINISTRADOR) {
             // El Admin no tiene perfil.
         }
 
-        // --- 3. Guardado ---
-        // Se guarda el Usuario (y el Perfil se guarda en cascada)
         return usuarioRepository.save(nuevoUsuario);
     }
 
-    /**
-     * Lista todos los usuarios (sin cambios, sigue devolviendo la entidad
-     * para que el controlador la mapee).
-     */
     @Transactional(readOnly = true)
     public List<Usuario> listarTodosLosUsuarios() {
         return usuarioRepository.findAll();
     }
 
-    /**
-     * Obtiene un usuario por ID (sin cambios, sigue devolviendo la entidad
-     * para que el controlador la mapee).
-     */
     @Transactional(readOnly = true)
     public Usuario obtenerUsuarioPorId(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado con id: " + id));
     }
 
-    /**
-     * Obtiene un usuario por Email (sin cambios, sigue devolviendo Optional<Usuario>
-     * como lo tenías).
-     */
     @Transactional(readOnly = true)
     public Optional<Usuario> obtenerUsuarioPorEmail(String email) {
         return usuarioRepository.findByEmail(email);
     }
 
-    /**
-     * 🚨 CAMBIO: AHORA USA EL NUEVO DTO 'UsuarioUpdateDTO'
-     */
     @Transactional
     public Usuario actualizarUsuario(Long id, UsuarioUpdateDTO request) {
 
-        Usuario usuario = obtenerUsuarioPorId(id); // Usa el método que ya lanza excepción
+        Usuario usuario = obtenerUsuarioPorId(id);
 
-        // --- Actualizar Campos de Usuario ---
         if (StringUtils.hasText(request.getNombre())) {
             usuario.setNombre(request.getNombre());
         }
@@ -246,21 +207,17 @@ public class UsuarioService implements UserDetailsService {
             usuario.setEmail(request.getEmail());
         }
 
-        // --- Actualizar Perfiles (Lógica mejorada) ---
         if (usuario.getRol() == Rol.ALUMNO) {
-            // Si es alumno, DEBE tener un perfil. Si no, lo crea.
             PerfilAlumno perfil = Optional.ofNullable(usuario.getPerfilAlumno()).orElse(new PerfilAlumno());
-            perfil.setUsuario(usuario); // Asegura el vínculo
+            perfil.setUsuario(usuario);
             usuario.setPerfilAlumno(perfil);
 
-            // Validar DNI de Alumno
             if (StringUtils.hasText(request.getDniAlumno()) && !request.getDniAlumno().equals(perfil.getDni())) {
                 if (perfilAlumnoRepository.existsByDni(request.getDniAlumno())) {
                     throw new ValidacionException("El nuevo DNI de alumno ya está en uso.");
                 }
                 perfil.setDni(request.getDniAlumno());
             }
-            // Actualizar otros campos de Alumno
             if (request.getNivel() != null) {
                 perfil.setNivel(request.getNivel());
             }
@@ -272,19 +229,16 @@ public class UsuarioService implements UserDetailsService {
             }
         }
         else if (usuario.getRol() == Rol.PROFESOR) {
-            // Si es profesor, DEBE tener un perfil. Si no, lo crea.
             PerfilProfesor perfil = Optional.ofNullable(usuario.getPerfilProfesor()).orElse(new PerfilProfesor());
-            perfil.setUsuario(usuario); // Asegura el vínculo
+            perfil.setUsuario(usuario);
             usuario.setPerfilProfesor(perfil);
 
-            // Validar DNI de Profesor
             if (StringUtils.hasText(request.getDniProfesor()) && !request.getDniProfesor().equals(perfil.getDni())) {
                 if (perfilProfesorRepository.existsByDni(request.getDniProfesor())) {
                     throw new ValidacionException("El nuevo DNI de profesor ya está en uso.");
                 }
                 perfil.setDni(request.getDniProfesor());
             }
-            // Actualizar otros campos de Profesor
             if (StringUtils.hasText(request.getTelefono())) {
                 perfil.setTelefono(request.getTelefono());
             }
@@ -307,8 +261,6 @@ public class UsuarioService implements UserDetailsService {
         usuarioRepository.deleteById(id);
     }
 
-    // --- Métodos Helper ---
-
     private String generarCodigoEstudianteUnico() {
         String codigoGenerado;
         boolean codigoExiste;
@@ -319,14 +271,23 @@ public class UsuarioService implements UserDetailsService {
         return codigoGenerado;
     }
 
-    /**
-     * Obtiene un usuario por email y lo convierte a DTO.
-     * Necesario para el endpoint de "Mis Secciones" del profesor.
-     */
     @Transactional(readOnly = true)
     public UsuarioResponse obtenerUsuarioResponsePorEmail(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado con email: " + email));
         return UsuarioResponse.deEntidad(usuario);
+    }
+
+    // ⭐ NUEVO MÉTODO: actualizar permiso de matrícula de un alumno
+    @Transactional
+    public Usuario actualizarPermisoMatricula(Long idUsuario, boolean habilitado) {
+        Usuario usuario = obtenerUsuarioPorId(idUsuario);
+
+        if (usuario.getRol() != Rol.ALUMNO) {
+            throw new ValidacionException("Solo se puede cambiar el permiso de matrícula a alumnos.");
+        }
+
+        usuario.setHabilitadoMatricula(habilitado);
+        return usuarioRepository.save(usuario);
     }
 }

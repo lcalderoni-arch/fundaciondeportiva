@@ -42,20 +42,19 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private Rol rol;
 
+    // 👇 NUEVO: flag para habilitar/bloquear matrícula
+    @Column(name = "habilitado_matricula", nullable = false)
+    private Boolean habilitadoMatricula = true;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false, nullable = false)
     private LocalDateTime fechaCreacion;
-
-    // 👉 NUEVO CAMPO: habilitado_matricula
-    @Builder.Default
-    @Column(name = "habilitado_matricula", nullable = false)
-    private Boolean habilitadoMatricula = false; // o true si quieres que todos empiecen habilitados
 
     // --- Relaciones 1:1 con Perfiles ---
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "perfil_alumno_id", referencedColumnName = "id")
-    @JsonManagedReference       // ✅ Padre
+    @JsonManagedReference
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private PerfilAlumno perfilAlumno;
