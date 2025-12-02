@@ -59,6 +59,11 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
                 throw new ValidacionException("El alumno no tiene un perfil de estudiante asociado");
             }
 
+            // ⭐ NUEVO: Validar que el alumno tenga habilitada la matrícula
+            if (Boolean.FALSE.equals(alumno.getHabilitadoMatricula())) {
+                throw new ValidacionException("El alumno no tiene habilitada la matrícula");
+            }
+
             // 2. Validar que la sección existe y está activa
             Seccion seccion = seccionRepository.findById(request.getSeccionId())
                     .orElseThrow(() -> new RecursoNoEncontradoException("Sección no encontrada con ID: " + request.getSeccionId()));
@@ -72,15 +77,14 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
                 throw new ValidacionException("La sección ya ha finalizado. No se pueden aceptar nuevas matrículas.");
             }
 
-            // ⭐ 4. LÓGICA DE REACTIVACIÓN (CORREGIDO)
-            // En lugar de solo verificar si existe, buscamos el registro
+            // ⭐ 4. LÓGICA DE REACTIVACIÓN
             Optional<Matricula> matriculaExistente = matriculaRepository.findByAlumnoIdAndSeccionId(alumnoId, request.getSeccionId());
 
             if (matriculaExistente.isPresent()) {
                 Matricula matricula = matriculaExistente.get();
 
-                // Si ya está ACTIVA (o INSCRITA), lanzamos error
-                if (matricula.getEstado() == EstadoMatricula.ACTIVA || matricula.getEstado() == EstadoMatricula.ACTIVA) {
+                // Si ya está ACTIVA (puedes añadir otros estados aquí si aplica, como INSCRITA)
+                if (matricula.getEstado() == EstadoMatricula.ACTIVA) {
                     throw new ValidacionException("Ya estás matriculado en esta sección");
                 }
 
@@ -89,7 +93,7 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
 
                 matricula.setEstado(EstadoMatricula.ACTIVA); // O EstadoMatricula.INSCRITA según tu Enum
                 matricula.setFechaMatricula(LocalDateTime.now()); // Actualizamos fecha de ingreso
-                matricula.setFechaRetiro(null); // Borramos fecha de retiro
+                matricula.setFechaRetiro(null);                    // Borramos fecha de retiro
                 matricula.setObservaciones(request.getObservaciones()); // Actualizamos observaciones si hay
 
                 Matricula matriculaReactivada = matriculaRepository.save(matricula);
@@ -97,7 +101,6 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
             }
 
             // ⭐ 5. Validar que haya cupo disponible (Solo si es nueva matrícula)
-            // Nota: Si reactivamos (arriba), técnicamente recupera su cupo, pero si es nueva validamos aquí.
             long matriculasActivas = matriculaRepository.countMatriculasActivasBySeccionId(request.getSeccionId());
             if (matriculasActivas >= seccion.getCapacidad()) {
                 throw new ValidacionException("La sección ha alcanzado su capacidad máxima. No hay cupos disponibles.");

@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // ⭐ CRÍTICO: Ignorar rutas públicas COMPLETAMENTE
+        // ⭐ Ignorar rutas públicas COMPLETAMENTE
         String path = request.getRequestURI();
 
         logger.info("🔍 JwtFilter procesando: " + path);
@@ -67,20 +67,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 3. Si no hay token en ningún lado, continuar sin autenticar
-        if (jwt == null) {
+        if (jwt == null || jwt.isBlank()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 4. Validar formato básico del JWT (3 partes separadas por 2 puntos)
+        long dotCount = jwt.chars().filter(ch -> ch == '.').count();
+        if (dotCount != 2) {
+            // Token evidentemente inválido, no intentamos parsearlo para evitar warnings ruidosos
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            // 4. Extraer email del token
+            // 5. Extraer email del token
             String userEmail = jwtService.extractUsername(jwt);
 
-            // 5. Si hay email y no está autenticado aún
+            // 6. Si hay email y no está autenticado aún
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-                // 6. Validar token
+                // 7. Validar token
                 if (jwtService.validateToken(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,

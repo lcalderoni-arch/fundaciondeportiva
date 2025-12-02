@@ -46,6 +46,11 @@ public class Usuario implements UserDetails {
     @Column(name = "fecha_creacion", updatable = false, nullable = false)
     private LocalDateTime fechaCreacion;
 
+    // 👉 NUEVO CAMPO: habilitado_matricula
+    @Builder.Default
+    @Column(name = "habilitado_matricula", nullable = false)
+    private Boolean habilitadoMatricula = false; // o true si quieres que todos empiecen habilitados
+
     // --- Relaciones 1:1 con Perfiles ---
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
