@@ -55,6 +55,12 @@ public class UsuarioService implements UserDetailsService {
      * La entidad 'Usuario' (del nuevo modelo) ya implementa 'UserDetails',
      * por lo que podemos devolverla directamente.
      */
+
+    @Transactional(readOnly = true)
+    public List<Usuario> listarAlumnos() {
+        return usuarioRepository.findByRol(Rol.ALUMNO);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {

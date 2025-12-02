@@ -64,6 +64,18 @@ public class UsuarioController {
         return ResponseEntity.ok(outputDTO);
     }
 
+    @GetMapping(value = "/alumnos", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMINISTRADOR')") // o hasAnyRole('ADMINISTRADOR','PROFESOR') si quieres
+    public ResponseEntity<List<UsuarioOutputDTO>> listarAlumnos() {
+        List<Usuario> alumnos = usuarioService.listarAlumnos();
+
+        List<UsuarioOutputDTO> dtoList = alumnos.stream()
+                .map(UsuarioOutputDTO::deEntidad)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtoList);
+    }
+
     @PutMapping(value = "/editar/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioOutputDTO> editarUsuario(@PathVariable Long id, @Valid @RequestBody UsuarioUpdateDTO updateDTO) {
