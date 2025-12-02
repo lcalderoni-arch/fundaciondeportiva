@@ -7,6 +7,7 @@ import com.proyecto.fundaciondeportiva.exception.ValidacionException;
 import com.proyecto.fundaciondeportiva.model.entity.Curso;
 import com.proyecto.fundaciondeportiva.model.entity.PerfilProfesor;
 import com.proyecto.fundaciondeportiva.model.entity.Seccion;
+import com.proyecto.fundaciondeportiva.model.entity.Sesion;
 import com.proyecto.fundaciondeportiva.model.entity.Usuario;
 import com.proyecto.fundaciondeportiva.model.enums.NivelAcademico;
 import com.proyecto.fundaciondeportiva.model.enums.Rol;
@@ -14,6 +15,7 @@ import com.proyecto.fundaciondeportiva.model.enums.Turno;
 import com.proyecto.fundaciondeportiva.repository.CursoRepository;
 import com.proyecto.fundaciondeportiva.repository.PerfilProfesorRepository;
 import com.proyecto.fundaciondeportiva.repository.SeccionRepository;
+import com.proyecto.fundaciondeportiva.repository.SesionRepository;
 import com.proyecto.fundaciondeportiva.repository.UsuarioRepository;
 import com.proyecto.fundaciondeportiva.service.ServicioSeccion;
 import org.slf4j.Logger;
@@ -35,6 +37,9 @@ public class ServicioSeccionImpl implements ServicioSeccion {
     private SeccionRepository seccionRepository;
 
     @Autowired
+    private SesionRepository sesionRepository;
+
+    @Autowired
     private CursoRepository cursoRepository;
 
     @Autowired
@@ -42,6 +47,10 @@ public class ServicioSeccionImpl implements ServicioSeccion {
 
     @Autowired
     private PerfilProfesorRepository perfilProfesorRepository;
+
+    // ===========================
+    //        LISTADOS
+    // ===========================
 
     @Override
     @Transactional(readOnly = true)
@@ -71,6 +80,10 @@ public class ServicioSeccionImpl implements ServicioSeccion {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sección no encontrada con id: " + id));
         return SeccionResponseDTO.deEntidad(seccion);
     }
+
+    // ===========================
+    //   CREAR / ACTUALIZAR / BORRAR
+    // ===========================
 
     @Override
     @Transactional
@@ -114,14 +127,19 @@ public class ServicioSeccionImpl implements ServicioSeccion {
                     .profesor(profesor)
                     .build();
 
-            // ⭐ GENERAR SEMANAS AUTOMÁTICAMENTE
+            // ⭐ GENERAR SEMANAS (SemanaSemana) EN LA ENTIDAD SECCIÓN
             logger.info("Generando {} semanas académicas...", request.getNumeroSemanas());
             nuevaSeccion.generarSemanas();
-            logger.info("Semanas generadas exitosamente");
+            logger.info("Semanas generadas en la entidad Seccion (no sesiones aún)");
 
+            // Guardar sección con sus semanas
             Seccion seccionGuardada = seccionRepository.save(nuevaSeccion);
             logger.info("Sección creada exitosamente con ID: {}", seccionGuardada.getId());
-            logger.info("Total de semanas generadas: {}", seccionGuardada.getSemanas().size());
+            logger.info("Total de semanas generadas: {}",
+                    seccionGuardada.getSemanas() != null ? seccionGuardada.getSemanas().size() : 0);
+
+            // ⭐ NUEVO: GENERAR SESIONES (tabla sesiones)
+            generarSesionesParaSeccion(seccionGuardada);
 
             return SeccionResponseDTO.deEntidad(seccionGuardada);
 
@@ -157,7 +175,7 @@ public class ServicioSeccionImpl implements ServicioSeccion {
             // Buscar profesor por DNI
             Usuario profesor = buscarProfesorPorDni(request.getProfesorDni());
 
-            // Actualizar campos
+            // Actualizar campos básicos
             seccionExistente.setNombre(request.getNombre());
             seccionExistente.setNivelSeccion(request.getNivelSeccion());
             seccionExistente.setGradoSeccion(request.getGradoSeccion());
@@ -169,19 +187,38 @@ public class ServicioSeccionImpl implements ServicioSeccion {
             seccionExistente.setCurso(curso);
             seccionExistente.setProfesor(profesor);
 
-            // ⭐ Si cambió el número de semanas, regenerar
-            if (!seccionExistente.getNumeroSemanas().equals(request.getNumeroSemanas())) {
-                logger.info("Número de semanas cambió de {} a {}. Regenerando semanas...",
+            boolean cambioNumeroSemanas =
+                    !seccionExistente.getNumeroSemanas().equals(request.getNumeroSemanas());
+
+            if (cambioNumeroSemanas) {
+                logger.info("Número de semanas cambió de {} a {}. Regenerando semanas y sesiones...",
                         seccionExistente.getNumeroSemanas(), request.getNumeroSemanas());
+
                 seccionExistente.setNumeroSemanas(request.getNumeroSemanas());
+
+                // Regenerar semanas (SemanaSemana)
                 seccionExistente.generarSemanas();
-                logger.info("Semanas regeneradas exitosamente");
+
+                // Guardar cambios de la sección y sus semanas
+                Seccion seccionConSemanas = seccionRepository.save(seccionExistente);
+
+                // 🔥 BORRAR SESIONES ANTIGUAS Y RECREARLAS
+                List<Sesion> sesionesAntiguas =
+                        sesionRepository.findBySeccionIdOrderByFechaAsc(seccionConSemanas.getId());
+                if (!sesionesAntiguas.isEmpty()) {
+                    sesionRepository.deleteAll(sesionesAntiguas);
+                }
+
+                generarSesionesParaSeccion(seccionConSemanas);
+
+                logger.info("Semanas y sesiones regeneradas correctamente para la sección {}", seccionConSemanas.getId());
+                return SeccionResponseDTO.deEntidad(seccionConSemanas);
+            } else {
+                // Si no cambió el número de semanas, solo guardamos lo demás
+                Seccion seccionActualizada = seccionRepository.save(seccionExistente);
+                logger.info("Sección actualizada exitosamente: {}", seccionActualizada.getId());
+                return SeccionResponseDTO.deEntidad(seccionActualizada);
             }
-
-            Seccion seccionActualizada = seccionRepository.save(seccionExistente);
-            logger.info("Sección actualizada exitosamente: {}", seccionActualizada.getId());
-
-            return SeccionResponseDTO.deEntidad(seccionActualizada);
 
         } catch (RecursoNoEncontradoException | ValidacionException e) {
             throw e;
@@ -248,6 +285,10 @@ public class ServicioSeccionImpl implements ServicioSeccion {
         logger.info("Sección activada exitosamente: {}", id);
     }
 
+    // ===========================
+    //  LISTADOS ESPECÍFICOS
+    // ===========================
+
     @Override
     @Transactional(readOnly = true)
     public List<SeccionResponseDTO> listarSeccionesPorCurso(Long cursoId) {
@@ -313,7 +354,39 @@ public class ServicioSeccionImpl implements ServicioSeccion {
                 .collect(Collectors.toList());
     }
 
-    // --- Métodos privados auxiliares ---
+    @Override
+    @Transactional(readOnly = true)
+    public List<SeccionResponseDTO> listarSeccionesPorDniProfesor(String dni) {
+        logger.info("Listando secciones del profesor con DNI: {}", dni);
+
+        // Buscar el perfil de profesor por DNI
+        PerfilProfesor perfilProfesor = perfilProfesorRepository.findByDni(dni)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró un profesor con DNI: " + dni));
+
+        // Obtener el usuario asociado al perfil
+        Usuario profesor = perfilProfesor.getUsuario();
+
+        if (profesor == null) {
+            throw new RecursoNoEncontradoException("El perfil de profesor no tiene un usuario asociado");
+        }
+
+        // Verificar que sea profesor
+        if (profesor.getRol() != Rol.PROFESOR) {
+            throw new ValidacionException("El usuario no tiene rol de profesor");
+        }
+
+        logger.info("Profesor encontrado: {} (ID: {})", profesor.getNombre(), profesor.getId());
+
+        // Buscar secciones por ID del profesor
+        return seccionRepository.findByProfesorId(profesor.getId())
+                .stream()
+                .map(SeccionResponseDTO::deEntidad)
+                .collect(Collectors.toList());
+    }
+
+    // ===========================
+    //      MÉTODOS PRIVADOS
+    // ===========================
 
     /**
      * Valida que las fechas sean consistentes
@@ -410,33 +483,42 @@ public class ServicioSeccionImpl implements ServicioSeccion {
 
         return codigoGenerado;
     }
-    @Override
-    @Transactional(readOnly = true)
-    public List<SeccionResponseDTO> listarSeccionesPorDniProfesor(String dni) {
-        logger.info("Listando secciones del profesor con DNI: {}", dni);
 
-        // Buscar el perfil de profesor por DNI
-        PerfilProfesor perfilProfesor = perfilProfesorRepository.findByDni(dni)
-                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró un profesor con DNI: " + dni));
+    /**
+     * ⭐ NUEVO: genera una sesión por semana para la sección,
+     * usando la fechaInicio + i semanas.
+     */
+    private void generarSesionesParaSeccion(Seccion seccion) {
+        Integer numeroSemanas = seccion.getNumeroSemanas();
+        LocalDate fechaInicio = seccion.getFechaInicio();
 
-        // Obtener el usuario asociado al perfil
-        Usuario profesor = perfilProfesor.getUsuario();
-
-        if (profesor == null) {
-            throw new RecursoNoEncontradoException("El perfil de profesor no tiene un usuario asociado");
+        if (numeroSemanas == null || numeroSemanas <= 0) {
+            logger.warn("No se generaron sesiones: numeroSemanas inválido ({}) para seccion {}",
+                    numeroSemanas, seccion.getId());
+            return;
         }
 
-        // Verificar que sea profesor
-        if (profesor.getRol() != Rol.PROFESOR) {
-            throw new ValidacionException("El usuario no tiene rol de profesor");
+        if (fechaInicio == null) {
+            logger.warn("No se generaron sesiones: fechaInicio es null para seccion {}", seccion.getId());
+            return;
         }
 
-        logger.info("Profesor encontrado: {} (ID: {})", profesor.getNombre(), profesor.getId());
+        logger.info("Generando {} sesiones (una por semana) para la sección {}", numeroSemanas, seccion.getId());
 
-        // Buscar secciones por ID del profesor
-        return seccionRepository.findByProfesorId(profesor.getId())
-                .stream()
-                .map(SeccionResponseDTO::deEntidad)
-                .collect(Collectors.toList());
+        for (int i = 0; i < numeroSemanas; i++) {
+            LocalDate fechaSesion = fechaInicio.plusWeeks(i);
+
+            Sesion sesion = Sesion.builder()
+                    .tema("Semana " + (i + 1))
+                    .fecha(fechaSesion)
+                    .horaInicio(null)
+                    .horaFin(null)
+                    .seccion(seccion)
+                    .build();
+
+            sesionRepository.save(sesion);
+        }
+
+        logger.info("Sesiones generadas correctamente para la sección {}", seccion.getId());
     }
 }
