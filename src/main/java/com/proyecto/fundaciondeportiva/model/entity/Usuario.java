@@ -1,5 +1,7 @@
 package com.proyecto.fundaciondeportiva.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.proyecto.fundaciondeportiva.model.enums.Rol;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,34 +50,39 @@ public class Usuario implements UserDetails {
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "perfil_alumno_id", referencedColumnName = "id")
-    @EqualsAndHashCode.Exclude // ✅ Correcto (Ya lo tienes)
-    @ToString.Exclude // Recomendado: Evita ciclos al imprimir logs
+    @JsonManagedReference       // ✅ Padre
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private PerfilAlumno perfilAlumno;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "perfil_profesor_id", referencedColumnName = "id")
-    @EqualsAndHashCode.Exclude // ⚠️ AGREGAR ESTO (Para evitar error con profesores)
+    @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private PerfilProfesor perfilProfesor;
 
-    // --- Relaciones Listas (Es mejor excluirlas también del HashCode y ToString por rendimiento y seguridad) ---
+    // --- Relaciones 1:N ---
 
     @OneToMany(mappedBy = "creadoPor")
+    @JsonIgnore
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private Set<Curso> cursosCreados;
 
     @OneToMany(mappedBy = "profesor")
+    @JsonIgnore
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private Set<Seccion> seccionesAsignadas;
 
     @OneToMany(mappedBy = "alumno")
+    @JsonIgnore
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private Set<Matricula> matriculas;
 
     @OneToMany(mappedBy = "alumno")
+    @JsonIgnore
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private Set<Asistencia> asistencias;
@@ -87,14 +94,10 @@ public class Usuario implements UserDetails {
     }
 
     @Override
-    public String getPassword() {
-        return this.password;
-    }
+    public String getPassword() { return this.password; }
 
     @Override
-    public String getUsername() {
-        return this.email;
-    }
+    public String getUsername() { return this.email; }
 
     @Override
     public boolean isAccountNonExpired() { return true; }

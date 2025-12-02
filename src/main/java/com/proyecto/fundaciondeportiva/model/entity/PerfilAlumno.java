@@ -1,5 +1,6 @@
 package com.proyecto.fundaciondeportiva.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.proyecto.fundaciondeportiva.model.enums.NivelAcademico;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,12 +30,12 @@ public class PerfilAlumno {
     @Column(length = 20, nullable = false)
     private String grado;
 
-    // NUEVO: Teléfono de emergencia
     @Column(name = "telefono_emergencia", length = 9)
     private String telefonoEmergencia;
 
-    // Relación inversa 1:1 (opcional, pero útil)
     @OneToOne(mappedBy = "perfilAlumno")
+    @JsonBackReference          // ⬅️ IMPORTANTE: rompe el ciclo
     @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private Usuario usuario;
 }
