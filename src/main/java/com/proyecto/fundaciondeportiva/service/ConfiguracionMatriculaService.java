@@ -1,46 +1,14 @@
 package com.proyecto.fundaciondeportiva.service;
 
-import com.proyecto.fundaciondeportiva.model.entity.ConfiguracionMatricula;
-import com.proyecto.fundaciondeportiva.repository.ConfiguracionMatriculaRepository;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.proyecto.fundaciondeportiva.dto.response.ConfiguracionMatriculaResponse;
 
-@Service
-public class ConfiguracionMatriculaService {
+import java.time.LocalDate;
 
-    @Autowired
-    private ConfiguracionMatriculaRepository configuracionMatriculaRepository;
+public interface ConfiguracionMatriculaService {
 
-    // Opcional: crear un registro por defecto al iniciar la app si no hay ninguno
-    @PostConstruct
-    @Transactional
-    public void inicializarConfiguracion() {
-        long total = configuracionMatriculaRepository.count();
-        if (total == 0) {
-            ConfiguracionMatricula conf = ConfiguracionMatricula.builder()
-                    .matriculaHabilitada(true) // por defecto habilitada
-                    .build();
-            configuracionMatriculaRepository.save(conf);
-        }
-    }
+    ConfiguracionMatriculaResponse obtenerConfiguracionMatricula();
 
-    @Transactional(readOnly = true)
-    public ConfiguracionMatricula obtenerConfiguracionActual() {
-        // en este diseño asumimos que solo hay 1 registro
-        return configuracionMatriculaRepository.findAll()
-                .stream()
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "No se encontró configuración de matrícula. Verifica inicialización."
-                ));
-    }
+    ConfiguracionMatriculaResponse actualizarFechasMatricula(LocalDate fechaInicio, LocalDate fechaFin);
 
-    @Transactional
-    public ConfiguracionMatricula actualizarEstadoMatricula(boolean habilitada) {
-        ConfiguracionMatricula conf = obtenerConfiguracionActual();
-        conf.setMatriculaHabilitada(habilitada);
-        return configuracionMatriculaRepository.save(conf);
-    }
+    ConfiguracionMatriculaResponse actualizarPermisoGlobalMatricula(boolean habilitada);
 }
