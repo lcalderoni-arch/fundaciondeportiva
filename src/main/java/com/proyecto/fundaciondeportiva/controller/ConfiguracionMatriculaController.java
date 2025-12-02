@@ -26,7 +26,8 @@ public class ConfiguracionMatriculaController {
             value = "/matricula",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ConfiguracionMatriculaResponse> obtenerConfiguracionMatricula() {
         ConfiguracionMatriculaResponse response =
                 configuracionMatriculaService.obtenerConfiguracionMatricula();

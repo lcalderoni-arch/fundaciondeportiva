@@ -34,9 +34,7 @@ public class ConfiguracionMatriculaServiceImpl implements ConfiguracionMatricula
         if (config == null) return null;
 
         ConfiguracionMatriculaResponse resp = new ConfiguracionMatriculaResponse();
-        resp.setMatriculaHabilitada(
-                config.isMatriculaHabilitada()
-        );
+        resp.setMatriculaHabilitada(config.isMatriculaHabilitada());
         resp.setFechaInicio(config.getFechaInicio());
         resp.setFechaFin(config.getFechaFin());
         return resp;
