@@ -1,6 +1,5 @@
 package com.proyecto.fundaciondeportiva.dto.output;
 
-
 import com.proyecto.fundaciondeportiva.model.entity.Usuario;
 import com.proyecto.fundaciondeportiva.model.entity.PerfilAlumno;
 import com.proyecto.fundaciondeportiva.model.entity.PerfilProfesor;
@@ -25,21 +24,21 @@ public class UsuarioOutputDTO {
     private Rol rol;
     private LocalDateTime fechaCreacion;
 
-    // AÑADIDO: DNI; TELEFONO
+    // 👉 NUEVO: estado de permiso de matrícula
+    private Boolean habilitadoMatricula;
+
+    // Alumno
     private String codigoEstudiante;
     private String dniAlumno;
     private NivelAcademico nivel;
     private String grado;
-    private String telefonoEmergencia; // NUEVO
+    private String telefonoEmergencia;
 
-    // CAMPO DE ALUMNO: 'grado' en lugar de 'carrera'
+    // Profesor
     private String dniProfesor;
     private String telefono;
     private String experiencia;
     private String gradoAcademico;
-
-    // ELIMINADO: private String departamento;
-    // ELIMINADO: private String carrera;
 
     public static UsuarioOutputDTO deEntidad(Usuario usuario) {
         if (usuario == null) {
@@ -52,22 +51,23 @@ public class UsuarioOutputDTO {
                 .email(usuario.getEmail())
                 .rol(usuario.getRol())
                 .fechaCreacion(usuario.getFechaCreacion())
+                .habilitadoMatricula(usuario.getHabilitadoMatricula())
                 .build();
 
-        // Mapea los campos de PerfilAlumno si existen
+        // Perfil Alumno
         if (usuario.getPerfilAlumno() != null) {
             PerfilAlumno perfil = usuario.getPerfilAlumno();
             dto.setCodigoEstudiante(perfil.getCodigoEstudiante());
-            dto.setDniAlumno(perfil.getDni()); // <-- USA EL SETTER CORRECTO
+            dto.setDniAlumno(perfil.getDni());
             dto.setNivel(perfil.getNivel());
             dto.setGrado(perfil.getGrado());
-            dto.setTelefonoEmergencia(perfil.getTelefonoEmergencia()); // NUEVO
+            dto.setTelefonoEmergencia(perfil.getTelefonoEmergencia());
         }
 
-        // Mapea los campos de PerfilProfesor si existen
+        // Perfil Profesor
         if (usuario.getPerfilProfesor() != null) {
             PerfilProfesor perfil = usuario.getPerfilProfesor();
-            dto.setDniProfesor(perfil.getDni()); // <-- USA EL SETTER CORRECTO
+            dto.setDniProfesor(perfil.getDni());
             dto.setTelefono(perfil.getTelefono());
             dto.setExperiencia(perfil.getExperiencia());
             dto.setGradoAcademico(perfil.getGradoAcademico());
@@ -75,6 +75,4 @@ public class UsuarioOutputDTO {
 
         return dto;
     }
-
 }
-

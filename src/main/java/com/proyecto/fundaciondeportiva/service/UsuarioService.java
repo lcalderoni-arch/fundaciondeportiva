@@ -2,7 +2,6 @@ package com.proyecto.fundaciondeportiva.service;
 
 import com.proyecto.fundaciondeportiva.dto.input.UsuarioInputDTO;
 import com.proyecto.fundaciondeportiva.dto.output.UsuarioUpdateDTO;
-import com.proyecto.fundaciondeportiva.dto.output.UsuarioOutputDTO;
 import com.proyecto.fundaciondeportiva.dto.response.UsuarioResponse;
 import com.proyecto.fundaciondeportiva.exception.RecursoNoEncontradoException;
 import com.proyecto.fundaciondeportiva.exception.ValidacionException;
@@ -25,7 +24,6 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * REFACTORIZACIÓN COMPLETA de tu UsuarioService.
@@ -49,6 +47,7 @@ public class UsuarioService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
 
     // --- 1. Lógica de Seguridad (Implementación de UserDetailsService) ---
+
     @Transactional(readOnly = true)
     public List<Usuario> listarAlumnos() {
         return usuarioRepository.findByRol(Rol.ALUMNO);
@@ -87,11 +86,11 @@ public class UsuarioService implements UserDetailsService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .rol(request.getRol())
-                // opcional: habilitarMatricula por defecto para alumnos
                 .build();
 
         // --- 2. Lógica de Perfiles (basada en el diagrama PlantUML) ---
         if (request.getRol() == Rol.ALUMNO) {
+            // Validaciones de Alumno
             if (request.getDniAlumno() == null || request.getDniAlumno().isBlank()) {
                 throw new ValidacionException("El DNI es obligatorio para el alumno.");
             }
@@ -117,10 +116,12 @@ public class UsuarioService implements UserDetailsService {
                 throw new ValidacionException("El Grado es obligatorio para el alumno.");
             }
 
+            // Teléfono de emergencia obligatorio
             if (request.getTelefonoEmergencia() == null || request.getTelefonoEmergencia().isBlank()) {
                 throw new ValidacionException("El teléfono de emergencia es obligatorio para el alumno.");
             }
 
+            // Generar código de estudiante si no se provee
             String codigoEstudiante = request.getCodigoEstudiante();
             if (codigoEstudiante == null || codigoEstudiante.isBlank()) {
                 codigoEstudiante = generarCodigoEstudianteUnico();
@@ -130,6 +131,7 @@ public class UsuarioService implements UserDetailsService {
                 );
             }
 
+            // Crear y asociar el perfil
             PerfilAlumno perfil = PerfilAlumno.builder()
                     .dni(request.getDniAlumno())
                     .nivel(request.getNivel())
@@ -141,6 +143,7 @@ public class UsuarioService implements UserDetailsService {
             nuevoUsuario.setPerfilAlumno(perfil);
 
         } else if (request.getRol() == Rol.PROFESOR) {
+            // Validaciones de Profesor
             if (request.getDniProfesor() == null || request.getDniProfesor().isBlank()) {
                 throw new ValidacionException("El DNI es obligatorio para el profesor.");
             }
@@ -194,6 +197,7 @@ public class UsuarioService implements UserDetailsService {
 
         Usuario usuario = obtenerUsuarioPorId(id);
 
+        // --- Actualizar Campos de Usuario ---
         if (StringUtils.hasText(request.getNombre())) {
             usuario.setNombre(request.getNombre());
         }
@@ -207,6 +211,7 @@ public class UsuarioService implements UserDetailsService {
             usuario.setEmail(request.getEmail());
         }
 
+        // --- Actualizar Perfiles (Lógica mejorada) ---
         if (usuario.getRol() == Rol.ALUMNO) {
             PerfilAlumno perfil = Optional.ofNullable(usuario.getPerfilAlumno()).orElse(new PerfilAlumno());
             perfil.setUsuario(usuario);

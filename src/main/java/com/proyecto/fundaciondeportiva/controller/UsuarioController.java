@@ -26,7 +26,11 @@ public class UsuarioController {
     @Autowired
     private UsuarioService usuarioService;
 
-    @PostMapping(value = "/crear", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(
+            value = "/crear",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioOutputDTO> crearUsuario(@Valid @RequestBody UsuarioInputDTO inputDTO) {
         Usuario nuevoUsuario = usuarioService.crearUsuario(inputDTO);
@@ -37,7 +41,8 @@ public class UsuarioController {
     @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UsuarioOutputDTO> obtenerPerfilPropio() {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
         String emailAutenticado = userDetails.getUsername();
 
         Usuario usuario = usuarioService.obtenerUsuarioPorEmail(emailAutenticado)
@@ -66,7 +71,7 @@ public class UsuarioController {
     }
 
     @GetMapping(value = "/alumnos", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')") // o hasAnyRole('ADMINISTRADOR','PROFESOR')
     public ResponseEntity<List<UsuarioOutputDTO>> listarAlumnos() {
         List<Usuario> alumnos = usuarioService.listarAlumnos();
 
@@ -77,9 +82,16 @@ public class UsuarioController {
         return ResponseEntity.ok(dtoList);
     }
 
-    @PutMapping(value = "/editar/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(
+            value = "/editar/{id}",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<UsuarioOutputDTO> editarUsuario(@PathVariable Long id, @Valid @RequestBody UsuarioUpdateDTO updateDTO) {
+    public ResponseEntity<UsuarioOutputDTO> editarUsuario(
+            @PathVariable Long id,
+            @Valid @RequestBody UsuarioUpdateDTO updateDTO
+    ) {
         Usuario usuarioActualizado = usuarioService.actualizarUsuario(id, updateDTO);
         UsuarioOutputDTO outputDTO = UsuarioOutputDTO.deEntidad(usuarioActualizado);
         return ResponseEntity.ok(outputDTO);
@@ -92,7 +104,7 @@ public class UsuarioController {
         return ResponseEntity.noContent().build();
     }
 
-    // ⭐ NUEVO ENDPOINT: cambiar permiso de matrícula de un alumno
+    // ⭐ NUEVO: cambiar permiso de matrícula de un alumno
     @PatchMapping(
             value = "/{id}/permiso-matricula",
             consumes = MediaType.APPLICATION_JSON_VALUE,
