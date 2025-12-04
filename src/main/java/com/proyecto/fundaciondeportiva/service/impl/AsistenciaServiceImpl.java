@@ -48,9 +48,24 @@ public class AsistenciaServiceImpl implements AsistenciaService {
 
         Long seccionId = sesion.getSeccion().getId();
 
-        // 1) Traer alumnos matriculados en la sección
+        System.out.println("=== DEBUG ASISTENCIAS ===");
+        System.out.println("Sesión ID: " + sesionId + " -> Sección ID: " + seccionId);
+
         List<Matricula> matriculas = matriculaRepository
                 .findBySeccionIdAndEstado(seccionId, EstadoMatricula.ACTIVA);
+
+        System.out.println("MATRÍCULAS ACTIVAS EN SECCION " + seccionId + ": " + matriculas.size());
+        for (Matricula m : matriculas) {
+            if (m.getAlumno() != null) {
+                System.out.println("  Matricula ID " + m.getId() +
+                        " -> alumnoId=" + m.getAlumno().getId() +
+                        ", nombre=" + m.getAlumno().getNombre() +
+                        ", email=" + m.getAlumno().getEmail());
+            } else {
+                System.out.println("  Matricula ID " + m.getId() + " -> SIN ALUMNO (null)");
+            }
+        }
+        System.out.println("=========================");
 
         Map<Long, Matricula> matriculaPorAlumno = matriculas.stream()
                 .collect(Collectors.toMap(m -> m.getAlumno().getId(), m -> m));
