@@ -135,12 +135,8 @@ public class AsistenciaServiceImpl implements AsistenciaService {
                     .orElseThrow(() -> new ResourceNotFoundException("Alumno no encontrado"));
 
             // Buscar si ya existe una asistencia para ese alumno en esa sesión
-            Optional<Asistencia> opt = asistenciaRepository
-                    .findAll()   // 👈 si quieres, puedes crear un método específico en el repo
-                    .stream()
-                    .filter(a -> a.getSesion().getId().equals(sesion.getId())
-                            && a.getAlumno().getId().equals(alumno.getId()))
-                    .findFirst();
+            Optional<Asistencia> opt =
+                    asistenciaRepository.findBySesionIdAndAlumnoId(sesion.getId(), alumno.getId());
 
             Asistencia asistencia = opt.orElseGet(() -> {
                 Asistencia nueva = new Asistencia();

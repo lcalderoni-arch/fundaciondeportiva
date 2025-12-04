@@ -89,12 +89,24 @@ public class MonitorAsistenciaController {
 
         int sinAsistencia = Math.max(totalAlumnos - conAsistencia, 0);
 
+        // 3) decidir horaInicio "real"
+        LocalTime horaInicioReal = sesion.getHoraInicio();
+        if (horaInicioReal == null) {
+            // si la sesión no tiene hora_inicio en BD, usamos el turno como fallback
+            horaInicioReal = obtenerHoraInicioBase(seccion);
+        }
+
+        String horaInicioStr = horaInicioReal != null
+                ? horaInicioReal.format(HORA_FORMATTER)
+                : null;
+
         System.out.println("DEBUG MONITOR -> Sesión " + sesion.getId()
                 + " | totalAlumnos=" + totalAlumnos
                 + " | conAsistencia=" + conAsistencia
-                + " | sinAsistencia=" + sinAsistencia);
+                + " | sinAsistencia=" + sinAsistencia
+                + " | horaInicio=" + horaInicioStr);
 
-        String estadoSemaforo = calcularEstadoSemaforo(sesion, ahora, sinAsistencia);
+        String estadoSemaforo = calcularEstadoSemaforo(horaInicioReal, ahora, sinAsistencia);
 
         return MonitorAsistenciaSesionDTO.builder()
                 .sesionId(sesion.getId())
@@ -102,7 +114,7 @@ public class MonitorAsistenciaController {
                 .curso(seccion.getCurso().getTitulo())
                 .gradoSeccion(seccion.getGradoSeccion())
                 .nivelSeccion(seccion.getNivelSeccion().name())
-                .horaInicio(sesion.getHoraInicio() != null ? sesion.getHoraInicio().format(HORA_FORMATTER) : null)
+                .horaInicio(horaInicioStr)
                 .horaFin(sesion.getHoraFin() != null ? sesion.getHoraFin().format(HORA_FORMATTER) : null)
                 .totalAlumnos(totalAlumnos)
                 .conAsistencia(conAsistencia)
@@ -111,18 +123,19 @@ public class MonitorAsistenciaController {
                 .build();
     }
 
-    private String calcularEstadoSemaforo(Sesion sesion, LocalTime ahora, int sinAsistencia) {
-        LocalTime inicio = sesion.getHoraInicio();
+    private String calcularEstadoSemaforo(LocalTime inicio, LocalTime ahora, int sinAsistencia) {
         if (inicio == null) {
+            // ni la sesión tiene hora, ni pudimos deducirla por turno
             return "SIN_HORARIO";
         }
 
-        // tolerancia de 10 minutos, puedes ajustar
+        // tolerancia de 10 minutos
         LocalTime tiempoTolerancia = inicio.plusMinutes(10);
 
         if (ahora.isBefore(inicio)) {
             return "PROXIMA"; // todavía no empieza
         }
+
         if (!ahora.isAfter(tiempoTolerancia)) {
             // entre inicio y tolerancia
             return sinAsistencia > 0 ? "EN_CURSO" : "OK";
