@@ -34,13 +34,14 @@ public class SesionController {
 
         List<Sesion> sesiones = sesionRepository.findBySeccion_IdOrderByFechaAsc(seccion.getId());
 
+        // 🔍 DEBUG
         System.out.println("=== DEBUG SESIONES ===");
-        System.out.println("Seccion ID solicitada: " + seccionId + " (Entidad seccion.getId(): " + seccion.getId() + ")");
+        System.out.println("Sección solicitada ID path: " + seccionId + " | entidad.getId(): " + seccion.getId());
         System.out.println("Total sesiones encontradas: " + sesiones.size());
         for (Sesion s : sesiones) {
-            Long idSeccionSesion = (s.getSeccion() != null) ? s.getSeccion().getId() : null;
+            Long secId = (s.getSeccion() != null) ? s.getSeccion().getId() : null;
             System.out.println("  Sesion ID " + s.getId()
-                    + " | seccion_id=" + idSeccionSesion
+                    + " | seccion_id=" + secId
                     + " | fecha=" + s.getFecha());
         }
         System.out.println("=======================");
