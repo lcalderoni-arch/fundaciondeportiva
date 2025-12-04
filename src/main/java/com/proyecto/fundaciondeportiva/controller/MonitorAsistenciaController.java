@@ -59,28 +59,27 @@ public class MonitorAsistenciaController {
     private MonitorAsistenciaSesionDTO mapearSesion(Sesion sesion, LocalTime ahora) {
         Seccion seccion = sesion.getSeccion();
 
-        // 1) alumnos activos de la sección
         List<Matricula> matriculasActivas =
                 matriculaRepository.findBySeccionIdAndEstado(seccion.getId(), EstadoMatricula.ACTIVA);
-
         int totalAlumnos = matriculasActivas.size();
 
-        // 2) asistencias ya registradas para esa sesión
-        List<Asistencia> asistenciasSesion =
-                asistenciaRepository.findBySesionId(sesion.getId());
-
-        int conAsistencia = asistenciasSesion.size();
+        int conAsistencia = asistenciaRepository
+                .countBySesionIdAndEstadoIsNotNull(sesion.getId());
         int sinAsistencia = Math.max(totalAlumnos - conAsistencia, 0);
 
-        // 3) estado semáforo
+        System.out.println("DEBUG MONITOR -> Sesión " + sesion.getId()
+                + " | totalAlumnos=" + totalAlumnos
+                + " | conAsistencia=" + conAsistencia
+                + " | sinAsistencia=" + sinAsistencia);
+
         String estadoSemaforo = calcularEstadoSemaforo(sesion, ahora, sinAsistencia);
 
         return MonitorAsistenciaSesionDTO.builder()
                 .sesionId(sesion.getId())
                 .seccionId(seccion.getId())
-                .curso(seccion.getCurso().getTitulo())              // ajusta según tu entidad
+                .curso(seccion.getCurso().getTitulo())
                 .gradoSeccion(seccion.getGradoSeccion())
-                .nivelSeccion(seccion.getNivelSeccion().name())     // si es enum
+                .nivelSeccion(seccion.getNivelSeccion().name())
                 .horaInicio(sesion.getHoraInicio() != null ? sesion.getHoraInicio().format(HORA_FORMATTER) : null)
                 .horaFin(sesion.getHoraFin() != null ? sesion.getHoraFin().format(HORA_FORMATTER) : null)
                 .totalAlumnos(totalAlumnos)
