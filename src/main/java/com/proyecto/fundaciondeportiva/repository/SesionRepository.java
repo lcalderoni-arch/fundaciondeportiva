@@ -1,3 +1,4 @@
+// src/main/java/com/proyecto/fundaciondeportiva/repository/SesionRepository.java
 package com.proyecto.fundaciondeportiva.repository;
 
 import com.proyecto.fundaciondeportiva.model.entity.Sesion;
@@ -6,16 +7,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-/**
- * Repositorio para la entidad Sesion. (NUEVO)
- */
 @Repository
 public interface SesionRepository extends JpaRepository<Sesion, Long> {
 
-    /**
-     * Busca todas las sesiones de una sección específica,
-     * ordenadas por fecha.
-     * 🚨 NOTA: 'findBySeccionIdOrderByFechaAsc' debe estar en inglés.
-     */
+    // Usamos el campo 'fecha' porque tu entidad Sesion tiene:
+    // private LocalDate fecha;
     List<Sesion> findBySeccionIdOrderByFechaAsc(Long seccionId);
 }
