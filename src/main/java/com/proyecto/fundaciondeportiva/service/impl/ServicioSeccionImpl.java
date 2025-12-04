@@ -204,7 +204,7 @@ public class ServicioSeccionImpl implements ServicioSeccion {
 
                 // 🔥 BORRAR SESIONES ANTIGUAS Y RECREARLAS
                 List<Sesion> sesionesAntiguas =
-                        sesionRepository.findBySeccionIdOrderByFechaAsc(seccionConSemanas.getId());
+                        sesionRepository.findBySeccion_IdOrderByFechaAsc(seccionConSemanas.getId());
                 if (!sesionesAntiguas.isEmpty()) {
                     sesionRepository.deleteAll(sesionesAntiguas);
                 }

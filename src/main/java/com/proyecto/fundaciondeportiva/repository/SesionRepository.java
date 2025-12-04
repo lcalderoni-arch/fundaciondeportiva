@@ -12,5 +12,5 @@ public interface SesionRepository extends JpaRepository<Sesion, Long> {
 
     // Usamos el campo 'fecha' porque tu entidad Sesion tiene:
     // private LocalDate fecha;
-    List<Sesion> findBySeccionIdOrderByFechaAsc(Long seccionId);
+    List<Sesion> findBySeccion_IdOrderByFechaAsc(Long seccionId);
 }

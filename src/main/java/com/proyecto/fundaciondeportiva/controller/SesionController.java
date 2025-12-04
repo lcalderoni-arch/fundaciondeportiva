@@ -32,7 +32,18 @@ public class SesionController {
         Seccion seccion = seccionRepository.findById(seccionId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sección no encontrada con id: " + seccionId));
 
-        List<Sesion> sesiones = sesionRepository.findBySeccionIdOrderByFechaAsc(seccion.getId());
+        List<Sesion> sesiones = sesionRepository.findBySeccion_IdOrderByFechaAsc(seccion.getId());
+
+        System.out.println("=== DEBUG SESIONES ===");
+        System.out.println("Seccion ID solicitada: " + seccionId + " (Entidad seccion.getId(): " + seccion.getId() + ")");
+        System.out.println("Total sesiones encontradas: " + sesiones.size());
+        for (Sesion s : sesiones) {
+            Long idSeccionSesion = (s.getSeccion() != null) ? s.getSeccion().getId() : null;
+            System.out.println("  Sesion ID " + s.getId()
+                    + " | seccion_id=" + idSeccionSesion
+                    + " | fecha=" + s.getFecha());
+        }
+        System.out.println("=======================");
 
         List<SesionSimpleDTO> dtoList = sesiones.stream()
                 .map(SesionSimpleDTO::deEntidad)
