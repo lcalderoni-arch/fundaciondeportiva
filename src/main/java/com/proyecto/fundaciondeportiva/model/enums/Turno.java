@@ -6,5 +6,6 @@ package com.proyecto.fundaciondeportiva.model.enums;
  */
 public enum Turno {
     MAÑANA,
-    TARDE
+    TARDE,
+    NOCHE
 }

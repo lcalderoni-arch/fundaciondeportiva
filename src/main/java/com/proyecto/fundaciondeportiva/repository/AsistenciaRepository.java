@@ -4,6 +4,7 @@ import com.proyecto.fundaciondeportiva.model.entity.Asistencia;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
 
@@ -17,4 +18,7 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     int countBySesionIdAndEstadoIsNotNull(Long sesionId);
 
     List<Asistencia> findByAlumnoIdAndSesion_SeccionId(Long alumnoId, Long seccionId);
+
+    Optional<Asistencia> findBySesionIdAndAlumnoId(Long sesionId, Long alumnoId);
+
 }

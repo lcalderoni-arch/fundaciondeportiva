@@ -7,6 +7,7 @@ import com.proyecto.fundaciondeportiva.model.entity.Matricula;
 import com.proyecto.fundaciondeportiva.model.entity.Sesion;
 import com.proyecto.fundaciondeportiva.model.entity.Seccion;
 import com.proyecto.fundaciondeportiva.model.enums.EstadoMatricula;
+import com.proyecto.fundaciondeportiva.model.enums.Turno;
 import com.proyecto.fundaciondeportiva.repository.AsistenciaRepository;
 import com.proyecto.fundaciondeportiva.repository.MatriculaRepository;
 import com.proyecto.fundaciondeportiva.repository.SesionRepository;
@@ -37,6 +38,23 @@ public class MonitorAsistenciaController {
 
     private static final DateTimeFormatter HORA_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
+    private LocalTime obtenerHoraInicioBase(Seccion seccion) {
+        if (seccion == null || seccion.getTurno() == null) return null;
+
+        Turno turno = seccion.getTurno(); // ← ahora es enum, no String
+
+        switch (turno) {
+            case MAÑANA:
+                return LocalTime.of(8, 30);
+            case TARDE:
+                return LocalTime.of(14, 0);
+            case NOCHE:
+                return LocalTime.of(18, 30);
+            default:
+                return null;
+        }
+    }
+
     // ⭐ Solo admin / coordinación, tú decides los roles
     @GetMapping("/asistencias/hoy")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','COORDINADOR','PROFESOR')")
@@ -59,12 +77,16 @@ public class MonitorAsistenciaController {
     private MonitorAsistenciaSesionDTO mapearSesion(Sesion sesion, LocalTime ahora) {
         Seccion seccion = sesion.getSeccion();
 
+        // 1) alumnos activos de la sección
         List<Matricula> matriculasActivas =
                 matriculaRepository.findBySeccionIdAndEstado(seccion.getId(), EstadoMatricula.ACTIVA);
+
         int totalAlumnos = matriculasActivas.size();
 
+        // 2) asistencias ya registradas para esa sesión (solo las que tienen estado)
         int conAsistencia = asistenciaRepository
                 .countBySesionIdAndEstadoIsNotNull(sesion.getId());
+
         int sinAsistencia = Math.max(totalAlumnos - conAsistencia, 0);
 
         System.out.println("DEBUG MONITOR -> Sesión " + sesion.getId()
