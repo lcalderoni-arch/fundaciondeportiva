@@ -47,21 +47,27 @@ public class RecursoServiceImpl implements RecursoService {
     @Transactional
     public RecursoDTO crearRecurso(RecursoRequest request, String emailProfesor) {
 
+        System.out.println("📥 RecursoRequest recibido: "
+                + "sesionId=" + request.getSesionId()
+                + ", titulo=" + request.getTitulo()
+                + ", momento=" + request.getMomento()
+                + ", tipo=" + request.getTipo()
+                + ", linkVideo=" + request.getLinkVideo());
+
         Sesion sesion = sesionRepository.findById(request.getSesionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sesión no encontrada"));
 
         Usuario usuario = usuarioRepository.findByEmail(emailProfesor)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        // ✅ Solo PROFESOR dueño de la sección o ADMIN puede crear recursos
         validarPermisos(usuario, sesion);
 
         Recurso recurso = new Recurso();
         recurso.setSesion(sesion);
         recurso.setTitulo(request.getTitulo());
         recurso.setDescripcion(request.getDescripcion());
-        recurso.setMomento(request.getMomento());      // EXPLORA / ESTUDIA / APLICA
-        recurso.setTipo(request.getTipo());            // LINK / PDF / VIDEO / etc.
+        recurso.setMomento(request.getMomento());
+        recurso.setTipo(request.getTipo());
         recurso.setArchivoUrl(request.getArchivoUrl());
         recurso.setLinkVideo(request.getLinkVideo());
 
@@ -108,11 +114,13 @@ public class RecursoServiceImpl implements RecursoService {
 
     private void validarPermisos(Usuario usuario, Sesion sesion) {
         if (usuario.getRol() == Rol.ADMINISTRADOR) {
-            return; // Admin siempre puede
+            return;
         }
         if (usuario.getRol() == Rol.PROFESOR) {
             if (sesion.getSeccion().getProfesor() == null ||
                     !sesion.getSeccion().getProfesor().getId().equals(usuario.getId())) {
+                System.out.println("❌ Permiso denegado: usuario " + usuario.getEmail()
+                        + " intenta crear recurso en sección " + sesion.getSeccion().getId());
                 throw new RuntimeException("No puedes registrar recursos en una sección que no es tuya.");
             }
         } else {
