@@ -41,7 +41,7 @@ public class AsistenciaController {
             value = "/registrar-sesion",
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR','COORDINADOR')")
+    @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR')")
     public ResponseEntity<Void> registrarAsistenciasSesion(
             @RequestBody RegistrarAsistenciasSesionRequest request,
             Authentication authentication
