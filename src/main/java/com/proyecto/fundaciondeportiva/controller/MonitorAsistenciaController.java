@@ -83,7 +83,7 @@ public class MonitorAsistenciaController {
 
         int totalAlumnos = matriculasActivas.size();
 
-        // 2) asistencias ya registradas para esa sesión (solo las que tienen estado)
+        // 2) asistencias ya registradas para esa sesión
         int conAsistencia = asistenciaRepository
                 .countBySesionIdAndEstadoIsNotNull(sesion.getId());
 
@@ -106,11 +106,13 @@ public class MonitorAsistenciaController {
                 + " | sinAsistencia=" + sinAsistencia
                 + " | horaInicio=" + horaInicioStr);
 
+        // 👉 aquí ahora sí le pasas un LocalTime
         String estadoSemaforo = calcularEstadoSemaforo(horaInicioReal, ahora, sinAsistencia);
 
         return MonitorAsistenciaSesionDTO.builder()
                 .sesionId(sesion.getId())
                 .seccionId(seccion.getId())
+                .nombreSeccion(seccion.getNombre())        // 👈 NUEVO, lo mantienes
                 .curso(seccion.getCurso().getTitulo())
                 .gradoSeccion(seccion.getGradoSeccion())
                 .nivelSeccion(seccion.getNivelSeccion().name())

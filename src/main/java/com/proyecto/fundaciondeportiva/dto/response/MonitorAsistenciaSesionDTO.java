@@ -11,6 +11,9 @@ public class MonitorAsistenciaSesionDTO {
     private Long sesionId;
     private Long seccionId;
 
+    // 🔹 NUEVO
+    private String nombreSeccion;
+
     private String curso;
     private String gradoSeccion;
     private String nivelSeccion;
