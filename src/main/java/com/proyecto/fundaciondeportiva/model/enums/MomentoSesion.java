@@ -5,7 +5,7 @@ package com.proyecto.fundaciondeportiva.model.enums;
  * Basado en: ENUM('ANTES','DURANTE','DESPUES')
  */
 public enum MomentoSesion {
-    EXPLORA,
-    ESTUDIA,
-    APLICA
+    ANTES,
+    DURANTE,
+    DESPUES
 }
