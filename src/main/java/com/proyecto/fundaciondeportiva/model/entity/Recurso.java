@@ -33,6 +33,7 @@ public class Recurso {
     private String descripcion;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "momento", nullable = false)
     private MomentoSesion momento;
 
     @Enumerated(EnumType.STRING)
