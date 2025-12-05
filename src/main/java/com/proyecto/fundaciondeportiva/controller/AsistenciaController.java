@@ -21,14 +21,13 @@ public class AsistenciaController {
     @Autowired
     private AsistenciaService asistenciaService;
 
-    // ======== DOCENTE ========
+    // ======== DOCENTE / ADMIN / COORDINADOR: VER ASISTENCIAS DE UNA SESIÓN ========
 
-    // Ver asistencias de una sesión concreta
     @GetMapping(
             value = "/sesion/{sesionId}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR','COORDINADOR')")
     public ResponseEntity<List<AsistenciaDetalleAlumnoDTO>> obtenerAsistenciasSesion(
             @PathVariable Long sesionId
     ) {
@@ -42,19 +41,18 @@ public class AsistenciaController {
             value = "/registrar-sesion",
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasRole('PROFESOR','ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR','COORDINADOR')")
     public ResponseEntity<Void> registrarAsistenciasSesion(
             @RequestBody RegistrarAsistenciasSesionRequest request,
             Authentication authentication
     ) {
-        String emailProfesor = authentication.getName();
-        asistenciaService.registrarAsistenciasSesion(request, emailProfesor);
+        String emailUsuario = authentication.getName();
+        asistenciaService.registrarAsistenciasSesion(request, emailUsuario);
         return ResponseEntity.ok().build();
     }
 
     // ======== ALUMNO ========
 
-    // Ver mis asistencias en una sección
     @GetMapping(
             value = "/mis-asistencias",
             produces = MediaType.APPLICATION_JSON_VALUE
