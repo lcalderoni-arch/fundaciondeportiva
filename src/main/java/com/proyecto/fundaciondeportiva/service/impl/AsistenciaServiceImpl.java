@@ -110,22 +110,26 @@ public class AsistenciaServiceImpl implements AsistenciaService {
     // ========= DOCENTE: REGISTRAR/ACTUALIZAR ASISTENCIAS =========
     @Override
     @Transactional
-    public void registrarAsistenciasSesion(RegistrarAsistenciasSesionRequest request, String emailProfesor) {
+    public void registrarAsistenciasSesion(RegistrarAsistenciasSesionRequest request, String emailUsuario) {
 
         Sesion sesion = sesionRepository.findById(request.getSesionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sesión no encontrada"));
 
-        Usuario profesor = usuarioRepository.findByEmail(emailProfesor)
-                .orElseThrow(() -> new ResourceNotFoundException("Profesor no encontrado"));
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        if (profesor.getRol() != Rol.PROFESOR) {
-            throw new RuntimeException("Solo un profesor puede registrar asistencias.");
-        }
-
-        // (Opcional pero recomendado) validar que sea el profesor de la sección
-        if (sesion.getSeccion().getProfesor() == null ||
-                !sesion.getSeccion().getProfesor().getId().equals(profesor.getId())) {
-            throw new RuntimeException("No puedes registrar asistencia en una sección que no es tuya.");
+        // ✅ Lógica según rol
+        if (usuario.getRol() == Rol.PROFESOR) {
+            // Validar que sea el profesor dueño de la sección
+            if (sesion.getSeccion().getProfesor() == null ||
+                    !sesion.getSeccion().getProfesor().getId().equals(usuario.getId())) {
+                throw new RuntimeException("No puedes registrar asistencia en una sección que no es tuya.");
+            }
+        } else if (usuario.getRol() == Rol.ADMINISTRADOR) {
+            // ✅ Admin / coordinador pueden editar cualquier sesión
+            // (no validamos que sean el profesor)
+        } else {
+            throw new RuntimeException("No tienes permiso para registrar asistencias.");
         }
 
         // Para cada registro recibido
@@ -134,9 +138,9 @@ public class AsistenciaServiceImpl implements AsistenciaService {
             Usuario alumno = usuarioRepository.findById(reg.getAlumnoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Alumno no encontrado"));
 
-            // Buscar si ya existe una asistencia para ese alumno en esa sesión
-            Optional<Asistencia> opt =
-                    asistenciaRepository.findBySesionIdAndAlumnoId(sesion.getId(), alumno.getId());
+            // ⬇️ Aquí podemos usar tu nuevo método de repo:
+            Optional<Asistencia> opt = asistenciaRepository
+                    .findBySesionIdAndAlumnoId(sesion.getId(), alumno.getId());
 
             Asistencia asistencia = opt.orElseGet(() -> {
                 Asistencia nueva = new Asistencia();
