@@ -28,7 +28,7 @@ public class AsistenciaController {
             value = "/sesion/{sesionId}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasRole('PROFESOR')")
+    @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR')")
     public ResponseEntity<List<AsistenciaDetalleAlumnoDTO>> obtenerAsistenciasSesion(
             @PathVariable Long sesionId
     ) {
@@ -42,7 +42,7 @@ public class AsistenciaController {
             value = "/registrar-sesion",
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasRole('PROFESOR')")
+    @PreAuthorize("hasRole('PROFESOR','ADMINISTRADOR')")
     public ResponseEntity<Void> registrarAsistenciasSesion(
             @RequestBody RegistrarAsistenciasSesionRequest request,
             Authentication authentication
