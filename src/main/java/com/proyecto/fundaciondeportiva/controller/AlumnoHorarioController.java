@@ -28,34 +28,36 @@ public class AlumnoHorarioController {
     @PreAuthorize("hasRole('ALUMNO')")
     public ResponseEntity<List<SesionHorarioDTO>> obtenerHorarioAlumno() {
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario alumno = usuarioService.obtenerUsuarioPorEmail(email)
-                .orElseThrow(() -> new RuntimeException("Alumno autenticado no encontrado"));
+        // 🔹 Código original (lo dejamos comentado hasta tener el repositorio correcto):
 
-        Long alumnoId = alumno.getId();
+        // String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        // Usuario alumno = usuarioService.obtenerUsuarioPorEmail(email)
+        //         .orElseThrow(() -> new RuntimeException("Alumno autenticado no encontrado"));
+        //
+        // Long alumnoId = alumno.getId();
+        //
+        // List<Sesion> sesiones = sesionRepository
+        //         .findBySeccion_Matriculas_Alumno_IdOrderByFechaAsc(alumnoId);
+        //
+        // List<SesionHorarioDTO> dtoList = sesiones.stream()
+        //         .map(s -> SesionHorarioDTO.builder()
+        //                 .sesionId(s.getId())
+        //                 .fecha(s.getFecha().toString())
+        //                 .horaInicio(s.getHoraInicio() != null ? s.getHoraInicio().toString() : null)
+        //                 .horaFin(s.getHoraFin() != null ? s.getHoraFin().toString() : null)
+        //                 .tituloCurso(s.getSeccion().getCurso().getTitulo())
+        //                 .nombreSeccion(s.getSeccion().getNombre())
+        //                 .aula(s.getSeccion().getAula())
+        //                 .profesor(
+        //                         s.getSeccion().getProfesor() != null
+        //                                 ? s.getSeccion().getProfesor().getNombre()
+        //                                 : null
+        //                 )
+        //                 .build()
+        //         )
+        //         .toList();
 
-        // Ajusta el método al nombre real de la relación en tu modelo
-        List<Sesion> sesiones = sesionRepository
-                .findBySeccion_Matriculas_Alumno_IdOrderByFechaAsc(alumnoId);
-
-        List<SesionHorarioDTO> dtoList = sesiones.stream()
-                .map(s -> SesionHorarioDTO.builder()
-                        .sesionId(s.getId())
-                        .fecha(s.getFecha().toString())
-                        .horaInicio(s.getHoraInicio() != null ? s.getHoraInicio().toString() : null)
-                        .horaFin(s.getHoraFin() != null ? s.getHoraFin().toString() : null)
-                        .tituloCurso(s.getSeccion().getCurso().getTitulo())
-                        .nombreSeccion(s.getSeccion().getNombre())
-                        .aula(s.getSeccion().getAula())
-                        .profesor(
-                                s.getSeccion().getProfesor() != null
-                                        ? s.getSeccion().getProfesor().getNombre()
-                                        : null
-                        )
-                        .build()
-                )
-                .toList();
-
-        return ResponseEntity.ok(dtoList);
+        // 🔸 Por ahora devolvemos lista vacía
+        return ResponseEntity.ok(List.of());
     }
 }
