@@ -43,6 +43,7 @@ public class SeccionResponseDTO {
     // Información del profesor
     private Long profesorId;
     private String nombreProfesor;
+    private String correoProfesor;
     private String dniProfesor;
 
     // Estadísticas
@@ -85,6 +86,9 @@ public class SeccionResponseDTO {
                 // Profesor
                 .profesorId(seccion.getProfesor().getId())
                 .nombreProfesor(seccion.getProfesor().getNombre())
+                .correoProfesor(
+                        seccion.getProfesor() != null ? seccion.getProfesor().getEmail() : null
+                )
                 .dniProfesor(seccion.getProfesor().getPerfilProfesor() != null ?
                         seccion.getProfesor().getPerfilProfesor().getDni() : "N/A")
                 // Estadísticas
