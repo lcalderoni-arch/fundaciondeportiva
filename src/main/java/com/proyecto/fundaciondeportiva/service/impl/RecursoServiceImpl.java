@@ -16,9 +16,15 @@ import com.proyecto.fundaciondeportiva.repository.UsuarioRepository;
 import com.proyecto.fundaciondeportiva.service.RecursoService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
 
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +38,10 @@ public class RecursoServiceImpl implements RecursoService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    // 📂 directorio base donde se guardarán los archivos
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     @Override
     public List<RecursoDTO> listarPorSesion(Long sesionId) {
@@ -89,9 +99,14 @@ public class RecursoServiceImpl implements RecursoService {
             String descripcion,
             String momentoStr,
             String tipoRecursoStr,
-            String archivoUrl,
+            MultipartFile archivo,
             String emailProfesor
     ) {
+
+        if (archivo == null || archivo.isEmpty()) {
+            throw new IllegalArgumentException("Debe adjuntar un archivo.");
+        }
+
         Sesion sesion = sesionRepository.findById(sesionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sesión no encontrada"));
 
@@ -100,20 +115,48 @@ public class RecursoServiceImpl implements RecursoService {
 
         validarPermisos(usuario, sesion);
 
-        MomentoSesion momento = MomentoSesion.valueOf(momentoStr);    // p.ej. ANTES/DURANTE/DESPUES
-        TipoRecurso tipo = TipoRecurso.valueOf(tipoRecursoStr);       // p.ej. PDF/LINK/VIDEO
+        MomentoSesion momento = MomentoSesion.valueOf(momentoStr);    // ANTES / DURANTE / DESPUES
+        TipoRecurso tipo = TipoRecurso.valueOf(tipoRecursoStr);       // PDF / DOCUMENTO / ARCHIVO / IMAGEN, etc.
 
-        Recurso recurso = new Recurso();
-        recurso.setSesion(sesion);
-        recurso.setTitulo(titulo);
-        recurso.setDescripcion(descripcion);
-        recurso.setMomento(momento);
-        recurso.setTipo(tipo);
-        recurso.setArchivoUrl(archivoUrl);
-        // linkVideo puede quedar null
+        try {
+            // 1. Generar nombre único
+            String originalFilename = archivo.getOriginalFilename();
+            String extension = "";
 
-        recurso = recursoRepository.save(recurso);
-        return toDTO(recurso);
+            if (StringUtils.hasText(originalFilename) && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+
+            String nuevoNombre = UUID.randomUUID() + extension;
+
+            // 2. Crear carpeta uploads/recursos dentro de uploadDir si no existe
+            Path carpetaRecursos = Paths.get(uploadDir, "recursos");
+            Files.createDirectories(carpetaRecursos);
+
+            // 3. Guardar archivo físico
+            Path destino = carpetaRecursos.resolve(nuevoNombre);
+            Files.copy(archivo.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
+
+            // 4. URL relativa que el frontend usará: /uploads/recursos/archivo.ext
+            String archivoUrl = "/uploads/recursos/" + nuevoNombre;
+
+            // 5. Crear entidad Recurso
+            Recurso recurso = new Recurso();
+            recurso.setSesion(sesion);
+            recurso.setTitulo(titulo);
+            recurso.setDescripcion(descripcion);
+            recurso.setMomento(momento);
+            recurso.setTipo(tipo);
+            recurso.setArchivoUrl(archivoUrl);
+            recurso.setLinkVideo(null);  // no aplica para archivos
+
+            recurso = recursoRepository.save(recurso);
+
+            return toDTO(recurso);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error al guardar el archivo en el servidor", e);
+        }
     }
 
     // 🔹 NUEVO: actualizar recurso

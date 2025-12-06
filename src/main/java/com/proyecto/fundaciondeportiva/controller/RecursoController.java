@@ -53,39 +53,18 @@ public class RecursoController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-
     @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR')")
     public ResponseEntity<RecursoDTO> subirArchivo(
             @PathVariable Long sesionId,
             @RequestParam("file") MultipartFile file,
             @RequestParam("titulo") String titulo,
             @RequestParam(value = "descripcion", required = false) String descripcion,
-            @RequestParam("momento") String momento,         // EXPLORA / ESTUDIA / APLICA
-            @RequestParam("tipoRecurso") String tipoRecurso, // PDF / WORD / VIDEO / etc.
+            @RequestParam("momento") String momento,         // ANTES / DURANTE / DESPUES
+            @RequestParam("tipoRecurso") String tipoRecurso, // PDF / DOCUMENTO / ARCHIVO / IMAGEN
             Authentication authentication
-    ) throws Exception {
+    ) {
 
         String email = authentication.getName();
-
-        // 📂 Carpeta (ajusta ruta según tu servidor)
-        Path uploadDir = Paths.get("uploads/recursos");
-        if (!Files.exists(uploadDir)) {
-            Files.createDirectories(uploadDir);
-        }
-
-        String originalFilename = file.getOriginalFilename();
-        String extension = "";
-
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-
-        String nuevoNombre = UUID.randomUUID() + extension;
-        Path destino = uploadDir.resolve(nuevoNombre);
-        Files.copy(file.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
-
-        // URL pública (asegúrate de configurar un ResourceHandler para /uploads/**)
-        String urlArchivo = "/uploads/recursos/" + nuevoNombre;
 
         RecursoDTO dto = recursoService.crearRecursoArchivo(
                 sesionId,
@@ -93,7 +72,7 @@ public class RecursoController {
                 descripcion,
                 momento,
                 tipoRecurso,
-                urlArchivo,
+                file,
                 email
         );
 

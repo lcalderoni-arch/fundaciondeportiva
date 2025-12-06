@@ -3,6 +3,7 @@ package com.proyecto.fundaciondeportiva.service;
 
 import com.proyecto.fundaciondeportiva.dto.request.RecursoRequest;
 import com.proyecto.fundaciondeportiva.dto.response.RecursoDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -18,11 +19,10 @@ public interface RecursoService {
             String descripcion,
             String momentoStr,
             String tipoRecursoStr,
-            String archivoUrl,
+            MultipartFile archivo,
             String emailProfesor
     );
 
-    // 🔹 NUEVOS:
     RecursoDTO actualizarRecurso(Long id, RecursoRequest request, String emailProfesor);
 
     void eliminarRecurso(Long id, String emailProfesor);

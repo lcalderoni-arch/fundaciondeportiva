@@ -1,23 +1,21 @@
 package com.proyecto.fundaciondeportiva.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+
 @Configuration
 public class StaticResourceConfig implements WebMvcConfigurer {
 
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-
-        // ⚠️ AJUSTA ESTA RUTA SEGÚN DONDE GUARDAS LOS ARCHIVOS
-
-        // Para LOCAL (si guardas en una carpeta "uploads" al lado del jar):
+        // Sirve cualquier /uploads/** desde la carpeta física uploadDir
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
-
-        // Si en Azure los guardas en otra ruta, por ejemplo:
-        // registry.addResourceHandler("/uploads/**")
-        //         .addResourceLocations("file:/home/site/wwwroot/uploads/");
+                .addResourceLocations("file:" + uploadDir + "/");
     }
 }
