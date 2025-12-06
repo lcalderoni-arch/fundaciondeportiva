@@ -13,12 +13,12 @@ public interface SesionRepository extends JpaRepository<Sesion, Long> {
 
     List<Sesion> findBySeccion_IdOrderByFechaAsc(Long seccionId);
 
-    // ⭐ NUEVO: sesiones de un día
+    // ⭐ sesiones de un día
     List<Sesion> findByFecha(LocalDate fecha);
 
-    // Por DNI del profesor (si Seccion tiene dniProfesor)
-    //List<Sesion> findBySeccion_DniProfesorOrderByFechaAsc(String dniProfesor);
+    // ⭐ TODAS las sesiones de un profesor (por id del usuario profesor)
+    List<Sesion> findBySeccion_Profesor_IdOrderByFechaAsc(Long profesorId);
 
-    // Por id del alumno (si Matricula tiene alumno.id o usuario.id)
-    //List<Sesion> findBySeccion_Matriculas_Alumno_IdOrderByFechaAsc(Long alumnoId);
+    // ⭐ TODAS las sesiones de un alumno (por id del usuario alumno vía matrícula)
+    List<Sesion> findBySeccion_Matriculas_Alumno_IdOrderByFechaAsc(Long alumnoId);
 }

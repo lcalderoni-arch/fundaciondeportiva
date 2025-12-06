@@ -28,32 +28,31 @@ public class DocenteHorarioController {
     @PreAuthorize("hasRole('PROFESOR')")
     public ResponseEntity<List<SesionHorarioDTO>> obtenerHorarioDocente() {
 
-        // 🔹 Por ahora no usamos el repositorio para evitar errores de compilación
-        //    (porque findBySeccion_DniProfesorOrderByFechaAsc está comentado).
+        // email del usuario autenticado
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario profesor = usuarioService.obtenerUsuarioPorEmail(email)
+                .orElseThrow(() -> new RuntimeException("Profesor autenticado no encontrado"));
 
-        // String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        // Usuario profesor = usuarioService.obtenerUsuarioPorEmail(email)
-        //         .orElseThrow(() -> new RuntimeException("Profesor autenticado no encontrado"));
-        //
-        // String dniProfesor = profesor.getPerfilProfesor().getDni();
-        //
-        // List<Sesion> sesiones = sesionRepository
-        //         .findBySeccion_DniProfesorOrderByFechaAsc(dniProfesor);
-        //
-        // List<SesionHorarioDTO> dtoList = sesiones.stream()
-        //         .map(s -> SesionHorarioDTO.builder()
-        //                 .sesionId(s.getId())
-        //                 .fecha(s.getFecha().toString())
-        //                 .horaInicio(s.getHoraInicio() != null ? s.getHoraInicio().toString() : null)
-        //                 .horaFin(s.getHoraFin() != null ? s.getHoraFin().toString() : null)
-        //                 .tituloCurso(s.getSeccion().getCurso().getTitulo())
-        //                 .nombreSeccion(s.getSeccion().getNombre())
-        //                 .aula(s.getSeccion().getAula())
-        //                 .build()
-        //         )
-        //         .toList();
+        Long profesorId = profesor.getId(); // 👈 usamos el ID del usuario
 
-        // 🔸 Devolvemos lista vacía temporalmente
-        return ResponseEntity.ok(List.of());
+        List<Sesion> sesiones = sesionRepository
+                .findBySeccion_Profesor_IdOrderByFechaAsc(profesorId);
+
+        List<SesionHorarioDTO> dtoList = sesiones.stream()
+                .map(s -> SesionHorarioDTO.builder()
+                        .sesionId(s.getId())
+                        .fecha(s.getFecha().toString())
+                        .horaInicio(s.getHoraInicio() != null ? s.getHoraInicio().toString() : null)
+                        .horaFin(s.getHoraFin() != null ? s.getHoraFin().toString() : null)
+                        .tituloCurso(s.getSeccion().getCurso().getTitulo())
+                        .nombreSeccion(s.getSeccion().getNombre())
+                        .aula(s.getSeccion().getAula())
+                        // opcional: nombre del profe en el DTO también
+                        .profesor(profesor.getNombre())
+                        .build()
+                )
+                .toList();
+
+        return ResponseEntity.ok(dtoList);
     }
 }
