@@ -42,6 +42,9 @@ public class MatriculaResponseDTO {
     private LocalDate fechaInicioSeccion;
     private LocalDate fechaFinSeccion;
 
+    // 🔹 NUEVO: semana actual de la sección
+    private Integer semanaActual;
+
     // Información del Curso
     private Long cursoId;
     private String codigoCurso;
@@ -52,6 +55,9 @@ public class MatriculaResponseDTO {
     private Long profesorId;
     private String nombreProfesor;
     private String dniProfesor;
+
+    // 🔹 NUEVO: correo del profesor
+    private String correoProfesor;
 
     public static MatriculaResponseDTO deEntidad(Matricula matricula) {
         if (matricula == null) {
@@ -84,6 +90,12 @@ public class MatriculaResponseDTO {
                 .aulaSeccion(matricula.getSeccion().getAula())
                 .fechaInicioSeccion(matricula.getSeccion().getFechaInicio())
                 .fechaFinSeccion(matricula.getSeccion().getFechaFin())
+                // 🔹 NUEVO: semana actual de la sección
+                .semanaActual(
+                        matricula.getSeccion().getSemanaActual() != null
+                                ? matricula.getSeccion().getSemanaActual().getNumero() // o getNumero(), getSemana(), etc.
+                                : null
+                )
                 // Curso
                 .cursoId(matricula.getSeccion().getCurso().getId())
                 .codigoCurso(matricula.getSeccion().getCurso().getCodigo())
@@ -94,6 +106,8 @@ public class MatriculaResponseDTO {
                 .nombreProfesor(matricula.getSeccion().getProfesor().getNombre())
                 .dniProfesor(matricula.getSeccion().getProfesor().getPerfilProfesor() != null ?
                         matricula.getSeccion().getProfesor().getPerfilProfesor().getDni() : null)
+                // 🔹 NUEVO: correo del profesor (asumiendo que está en Usuario.email)
+                .correoProfesor(matricula.getSeccion().getProfesor().getEmail())
                 .build();
     }
 }
