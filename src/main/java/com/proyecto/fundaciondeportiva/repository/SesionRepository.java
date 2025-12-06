@@ -17,9 +17,8 @@ public interface SesionRepository extends JpaRepository<Sesion, Long> {
     List<Sesion> findByFecha(LocalDate fecha);
 
     // Por DNI del profesor (si Seccion tiene dniProfesor)
-    List<Sesion> findBySeccion_DniProfesorOrderByFechaAsc(String dniProfesor);
+    //List<Sesion> findBySeccion_DniProfesorOrderByFechaAsc(String dniProfesor);
 
     // Por id del alumno (si Matricula tiene alumno.id o usuario.id)
-    List<Sesion> findBySeccion_Matriculas_Alumno_IdOrderByFechaAsc(Long alumnoId);
-
+    //List<Sesion> findBySeccion_Matriculas_Alumno_IdOrderByFechaAsc(Long alumnoId);
 }
