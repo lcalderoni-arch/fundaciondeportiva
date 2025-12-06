@@ -9,19 +9,18 @@ import java.time.LocalDateTime;
 
 @Data
 public class RecursoDTO {
-
     private Long id;
-
     private String titulo;
     private String descripcion;
-
     private MomentoSesion momento;
     private TipoRecurso tipo;
-
     private String archivoUrl;
     private String linkVideo;
-
     private LocalDateTime fechaPublicacion;
-
     private Long sesionId;
+
+    // 🔹 Para tareas
+    private LocalDateTime fechaInicioEntrega;
+    private LocalDateTime fechaFinEntrega;
+    private Boolean permiteEntregas;
 }

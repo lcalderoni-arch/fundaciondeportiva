@@ -66,10 +66,16 @@ public class RecursoServiceImpl implements RecursoService {
         recurso.setSesion(sesion);
         recurso.setTitulo(request.getTitulo());
         recurso.setDescripcion(request.getDescripcion());
-        recurso.setMomento(request.getMomento()); // MomentoSesion
-        recurso.setTipo(request.getTipo());       // TipoRecurso
+        recurso.setMomento(request.getMomento());
+        recurso.setTipo(request.getTipo());
         recurso.setArchivoUrl(request.getArchivoUrl());
         recurso.setLinkVideo(request.getLinkVideo());
+
+        recurso.setFechaInicioEntrega(request.getFechaInicioEntrega());
+        recurso.setFechaFinEntrega(request.getFechaFinEntrega());
+        recurso.setPermiteEntregas(
+                request.getPermiteEntregas() != null ? request.getPermiteEntregas() : false
+        );
 
         recurso = recursoRepository.save(recurso);
         return toDTO(recurso);
@@ -196,6 +202,12 @@ public class RecursoServiceImpl implements RecursoService {
         dto.setLinkVideo(r.getLinkVideo());
         dto.setFechaPublicacion(r.getFechaPublicacion());
         dto.setSesionId(r.getSesion().getId());
+
+        // 🔹 NUEVO – solo para tareas
+        dto.setFechaInicioEntrega(r.getFechaInicioEntrega());
+        dto.setFechaFinEntrega(r.getFechaFinEntrega());
+        dto.setPermiteEntregas(r.getPermiteEntregas());
+
         return dto;
     }
 }

@@ -11,5 +11,6 @@ public enum TipoRecurso {
     IMAGEN,
     PDF,
     DOCUMENTO,
-    OTRO
+    OTRO,
+    TAREA
 }

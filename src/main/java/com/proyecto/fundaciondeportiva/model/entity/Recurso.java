@@ -40,6 +40,11 @@ public class Recurso {
     @Column(nullable = false)
     private TipoRecurso tipo;
 
+    // 🔹 Solo usados cuando tipo == TAREA
+    private LocalDateTime fechaInicioEntrega;
+    private LocalDateTime fechaFinEntrega;
+    private Boolean permiteEntregas;
+
     @Column(name = "archivo_url", length = 255)
     private String archivoUrl;
 
