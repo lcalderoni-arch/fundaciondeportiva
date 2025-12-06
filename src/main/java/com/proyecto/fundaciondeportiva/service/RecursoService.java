@@ -16,9 +16,14 @@ public interface RecursoService {
             Long sesionId,
             String titulo,
             String descripcion,
-            String momentoStr,   // MomentoSesion en String (EXPLORA/ESTUDIA/APLICA)
-            String tipoRecursoStr, // TipoRecurso en String (PDF/LINK/VIDEO/etc.)
+            String momentoStr,
+            String tipoRecursoStr,
             String archivoUrl,
             String emailProfesor
     );
+
+    // 🔹 NUEVOS:
+    RecursoDTO actualizarRecurso(Long id, RecursoRequest request, String emailProfesor);
+
+    void eliminarRecurso(Long id, String emailProfesor);
 }

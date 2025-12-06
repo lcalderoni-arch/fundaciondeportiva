@@ -53,6 +53,7 @@ public class RecursoController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+
     @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR')")
     public ResponseEntity<RecursoDTO> subirArchivo(
             @PathVariable Long sesionId,
@@ -97,5 +98,31 @@ public class RecursoController {
         );
 
         return ResponseEntity.ok(dto);
+    }
+
+    // 🔹 ACTUALIZAR recurso (LINK o archivo)
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR')")
+    public ResponseEntity<RecursoDTO> actualizarRecurso(
+            @PathVariable Long id,
+            @RequestBody RecursoRequest request,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+        RecursoDTO dto = recursoService.actualizarRecurso(id, request, email);
+        return ResponseEntity.ok(dto);
+    }
+
+    // 🔹 ELIMINAR recurso
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR')")
+    public ResponseEntity<Void> eliminarRecurso(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+        recursoService.eliminarRecurso(id, email);
+        return ResponseEntity.noContent().build();
     }
 }
