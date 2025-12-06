@@ -68,12 +68,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ⭐ Usa el bean explícitamente
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-// Ya NO es pública
-                                .requestMatchers(HttpMethod.POST, "/api/usuarios/crear").authenticated()
-                                .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
-                                .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 👇 ARCHIVOS PÚBLICOS
+                        .requestMatchers("/uploads/**").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        // Ya NO es pública
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios/crear").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
