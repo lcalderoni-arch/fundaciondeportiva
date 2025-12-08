@@ -7,7 +7,9 @@ import com.proyecto.fundaciondeportiva.repository.EventoRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -77,5 +79,25 @@ public class DataCleaningService {
         }
         // aquí podrías parsear JSON y corregir campos si quieres
         return detalles;
+    }
+
+    public Map<String, Object> obtenerResumenCalidad() {
+        Map<String, Object> resp = new HashMap<>();
+
+        long totalCrudos = eventoRepo.count();
+        long totalLimpios = limpioRepo.count();
+
+        Map<String, Long> detalleCalidad = new HashMap<>();
+        limpioRepo.countByCalidad().forEach(row -> {
+            String calidad = (String) row[0];
+            Long count = (Long) row[1];
+            detalleCalidad.put(calidad, count);
+        });
+
+        resp.put("totalCrudos", totalCrudos);
+        resp.put("totalLimpios", totalLimpios);
+        resp.put("detalleCalidad", detalleCalidad);
+
+        return resp;
     }
 }
