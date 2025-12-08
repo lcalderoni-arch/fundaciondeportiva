@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/etl")
-@CrossOrigin("*")
 public class ETLUsuariosController {
 
     @Autowired
