@@ -9,8 +9,7 @@ import com.proyecto.fundaciondeportiva.model.enums.NivelAcademico;
 import com.proyecto.fundaciondeportiva.model.enums.Rol;
 import com.proyecto.fundaciondeportiva.repository.UsuarioRepository;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,8 +19,14 @@ import java.util.List;
 @Service
 public class ETLUsuariosService {
 
-    @Autowired
-    private UsuarioRepository usuarioRepo;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public ETLUsuariosService(UsuarioRepository usuarioRepository,
+                              PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public ETLResponseDTO procesarExcel(MultipartFile file) {
 
@@ -58,10 +63,20 @@ public class ETLUsuariosService {
                     String telProfesor = getStringCell(row, 7);
                     String experiencia = getStringCell(row, 8);
 
-                    // 3) Validaciones comunes
+                    // 👇 NUEVO: columna 9 = password plano
+                    String passwordPlano = getStringCell(row, 9);
+
+                    // 3) Validación básica de campos obligatorios
                     if (isBlank(nombre) || isBlank(email) || isBlank(rolStr)) {
                         agregarError(resultado, filaActual,
                                 "Nombre, email y rol son obligatorios.");
+                        continue;
+                    }
+
+                    // Validar contraseña
+                    if (passwordPlano == null || passwordPlano.isBlank()) {
+                        agregarError(resultado, filaActual,
+                                "La contraseña está vacía.");
                         continue;
                     }
 
@@ -70,7 +85,7 @@ public class ETLUsuariosService {
                         continue;
                     }
 
-                    if (usuarioRepo.existsByEmail(email)) {
+                    if (usuarioRepository.existsByEmail(email)) {
                         agregarError(resultado, filaActual, "Email repetido: " + email);
                         continue;
                     }
@@ -83,8 +98,8 @@ public class ETLUsuariosService {
                             continue;
                         }
 
-                        if (usuarioRepo.existsByPerfilAlumno_Dni(dni) ||
-                                usuarioRepo.existsByPerfilProfesor_Dni(dni)) {
+                        if (usuarioRepository.existsByPerfilAlumno_Dni(dni) ||
+                                usuarioRepository.existsByPerfilProfesor_Dni(dni)) {
                             agregarError(resultado, filaActual,
                                     "DNI repetido: " + dni);
                             continue;
@@ -96,10 +111,12 @@ public class ETLUsuariosService {
                     u.setNombre(nombre.trim());
                     u.setEmail(email.trim());
                     u.setRol(Rol.valueOf(rolStr));
-                    u.setPassword("{noop}123456"); // O encriptar con BCrypt
                     u.setHabilitadoMatricula(true);
 
-                    // 6) Segun rol, generar perfil
+                    // 🔐 Encriptar contraseña del Excel
+                    u.setPassword(passwordEncoder.encode(passwordPlano.trim()));
+
+                    // 6) Según rol, generar perfil
                     if (rolStr.equals("ALUMNO")) {
 
                         // Validaciones específicas
@@ -153,7 +170,7 @@ public class ETLUsuariosService {
                     }
 
                     // 7) Guardamos todo
-                    usuarioRepo.save(u);
+                    usuarioRepository.save(u);
                     resultado.setExitosos(resultado.getExitosos() + 1);
 
                 } catch (Exception ex) {
@@ -175,7 +192,8 @@ public class ETLUsuariosService {
 
     private boolean esFilaVacia(Row row) {
         if (row == null) return true;
-        for (int i = 0; i <= 8; i++) { // revisamos solo las primeras 9 columnas
+        // ahora revisamos columnas 0..9 (incluye password)
+        for (int i = 0; i <= 9; i++) {
             Cell cell = row.getCell(i);
             if (cell != null && cell.getCellType() != CellType.BLANK) {
                 String v = getStringCell(row, i);
@@ -190,17 +208,14 @@ public class ETLUsuariosService {
         Cell cell = row.getCell(index);
         if (cell == null) return null;
 
-        // Normalizamos tipo
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue().trim();
             case NUMERIC -> {
-                // evita notación científica
                 BigDecimal bd = BigDecimal.valueOf(cell.getNumericCellValue());
                 yield bd.toPlainString();
             }
             case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
             case FORMULA -> {
-                // evaluamos como string si es posible
                 try {
                     yield cell.getStringCellValue().trim();
                 } catch (Exception e) {
@@ -226,7 +241,6 @@ public class ETLUsuariosService {
 
     private void agregarError(ETLResponseDTO res, int fila, String msg) {
         if (res.getErrores() == null) {
-            // por si no se inicializó la lista
             res.setErrores(new java.util.ArrayList<>());
         }
         ErrorFilaDTO error = new ErrorFilaDTO();
