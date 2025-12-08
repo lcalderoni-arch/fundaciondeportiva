@@ -1,5 +1,7 @@
 package com.proyecto.fundaciondeportiva.service.impl;
 
+import com.proyecto.fundaciondeportiva.model.entity.ConfiguracionMatricula;
+
 import com.proyecto.fundaciondeportiva.dto.request.MatriculaRequestDTO;
 import com.proyecto.fundaciondeportiva.dto.response.MatriculaResponseDTO;
 import com.proyecto.fundaciondeportiva.exception.RecursoNoEncontradoException;
@@ -9,6 +11,7 @@ import com.proyecto.fundaciondeportiva.model.entity.Seccion;
 import com.proyecto.fundaciondeportiva.model.entity.Usuario;
 import com.proyecto.fundaciondeportiva.model.enums.EstadoMatricula;
 import com.proyecto.fundaciondeportiva.model.enums.Rol;
+import com.proyecto.fundaciondeportiva.repository.ConfiguracionMatriculaRepository;
 import com.proyecto.fundaciondeportiva.repository.MatriculaRepository;
 import com.proyecto.fundaciondeportiva.repository.SeccionRepository;
 import com.proyecto.fundaciondeportiva.repository.UsuarioRepository;
@@ -38,6 +41,9 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private ConfiguracionMatriculaRepository configuracionMatriculaRepository;
 
     // --- OPERACIONES DE ALUMNO ---
 
@@ -347,32 +353,55 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
     public int resetCicloAcademico() {
         logger.info("Iniciando reinicio de ciclo académico: archivando matrículas activas");
 
-        // 1) Traer todas las matrículas ACTIVAS
+        // 1) ARCHIVAR MATRÍCULAS ACTIVAS
         List<Matricula> activas = matriculaRepository.findByEstado(EstadoMatricula.ACTIVA);
 
         if (activas.isEmpty()) {
             logger.info("No hay matrículas activas para archivar");
-            return 0;
-        }
-
-        // 2) Cambiar su estado a un valor que represente "archivada / cerrada"
-        for (Matricula m : activas) {
-            // 👇 IMPORTANTE:
-            // Usa el estado que tenga sentido en tu Enum.
-            // Si tienes un valor ARCHIVADA en EstadoMatricula, úsalo.
-            // Si no, puedes usar COMPLETADA, RETIRADA o crear uno nuevo.
-            m.setEstado(EstadoMatricula.RETIRADA); // <-- AJUSTA según tu diseño
-
-            // Opcional: si quieres registrar fecha de cierre
-            if (m.getFechaRetiro() == null) {
-                m.setFechaRetiro(LocalDateTime.now());
+        } else {
+            for (Matricula m : activas) {
+                m.setEstado(EstadoMatricula.RETIRADA); // o ARCHIVADA si tienes ese estado
+                if (m.getFechaRetiro() == null) {
+                    m.setFechaRetiro(LocalDateTime.now());
+                }
             }
+            matriculaRepository.saveAll(activas);
+            logger.info("Matrículas archivadas: {}", activas.size());
         }
 
-        // 3) Guardar todos los cambios
-        matriculaRepository.saveAll(activas);
+        // 2) BLOQUEAR MATRÍCULA A NIVEL GLOBAL
+        try {
+            Optional<ConfiguracionMatricula> optConfig =
+                    configuracionMatriculaRepository.findFirstByOrderByIdAsc();
 
-        logger.info("Matrículas archivadas: {}", activas.size());
+            if (optConfig.isPresent()) {
+                ConfiguracionMatricula config = optConfig.get();
+                config.setMatriculaHabilitada(false);
+                configuracionMatriculaRepository.save(config);
+                logger.info("Configuración global de matrícula marcada como BLOQUEADA");
+            } else {
+                logger.warn("No se encontró configuración de matrícula global para actualizar");
+            }
+        } catch (Exception e) {
+            logger.error("Error actualizando configuración global de matrícula", e);
+            // No lanzamos excepción para no romper el cierre; solo lo registramos
+        }
+
+        // 3) BLOQUEAR LA MATRÍCULA DE TODOS LOS ALUMNOS
+        try {
+            List<Usuario> alumnos = usuarioRepository.findAllAlumnos();
+            if (!alumnos.isEmpty()) {
+                for (Usuario u : alumnos) {
+                    u.setHabilitadoMatricula(false);
+                }
+                usuarioRepository.saveAll(alumnos);
+                logger.info("Se ha bloqueado la matrícula de {} alumnos", alumnos.size());
+            }
+        } catch (Exception e) {
+            logger.error("Error al bloquear la matrícula de los alumnos", e);
+        }
+
+        // Devolvemos cuántas matrículas se archivaron, como antes
         return activas.size();
     }
 }

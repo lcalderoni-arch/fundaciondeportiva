@@ -3,6 +3,7 @@ package com.proyecto.fundaciondeportiva.repository;
 import com.proyecto.fundaciondeportiva.model.entity.Usuario;
 import com.proyecto.fundaciondeportiva.model.enums.Rol;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,4 +22,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     // 👉 NUEVO: para listar por rol (ALUMNO, PROFESOR, ADMINISTRADOR)
     List<Usuario> findByRol(Rol rol);
+
+    @Query("SELECT u FROM Usuario u WHERE u.rol = com.proyecto.fundaciondeportiva.model.enums.Rol.ALUMNO")
+    List<Usuario> findAllAlumnos();
 }
