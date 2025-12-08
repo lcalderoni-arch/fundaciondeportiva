@@ -69,14 +69,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 👇 ARCHIVOS PÚBLICOS
                         .requestMatchers("/uploads/**").permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        // Ya NO es pública
+                        // ⭐ PERMITIR TODO LO RELACIONADO A AUTH
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // Crear usuarios solo autenticado
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/crear").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
+
+                        // Todo lo demás requiere token
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
