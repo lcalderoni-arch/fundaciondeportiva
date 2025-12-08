@@ -32,4 +32,6 @@ public interface ServicioMatricula {
     MatriculaResponseDTO asignarCalificacion(Long id, Double calificacion);
 
     void eliminarMatricula(Long id);
+
+    int resetCicloAcademico();
 }

@@ -291,4 +291,29 @@ public class MatriculaController {
             throw e;
         }
     }
+
+    @PostMapping("/reset-ciclo")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<?> resetCicloAcademico() {
+        try {
+            logger.info("Administrador solicita reinicio de ciclo académico y archivado de matrículas");
+
+            int totalArchivadas = servicioMatricula.resetCicloAcademico();
+
+            return ResponseEntity.ok(
+                    java.util.Map.of(
+                            "matriculasArchivadas", totalArchivadas,
+                            "mensaje", "Ciclo reiniciado correctamente"
+                    )
+            );
+        } catch (Exception e) {
+            logger.error("Error en endpoint resetCicloAcademico", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    java.util.Map.of(
+                            "message", "Error al reiniciar ciclo académico",
+                            "detalle", e.getMessage()
+                    )
+            );
+        }
+    }
 }

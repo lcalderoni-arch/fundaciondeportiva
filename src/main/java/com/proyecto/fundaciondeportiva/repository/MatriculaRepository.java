@@ -60,4 +60,6 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
      */
     @Query("SELECT m FROM Matricula m WHERE m.alumno.perfilAlumno.dni = :dni")
     List<Matricula> findByAlumnoDni(@Param("dni") String dni);
+
+    List<Matricula> findByEstado(EstadoMatricula estado);
 }

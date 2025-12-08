@@ -341,4 +341,38 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
             throw new RuntimeException("Error al eliminar la matrícula: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    @Transactional
+    public int resetCicloAcademico() {
+        logger.info("Iniciando reinicio de ciclo académico: archivando matrículas activas");
+
+        // 1) Traer todas las matrículas ACTIVAS
+        List<Matricula> activas = matriculaRepository.findByEstado(EstadoMatricula.ACTIVA);
+
+        if (activas.isEmpty()) {
+            logger.info("No hay matrículas activas para archivar");
+            return 0;
+        }
+
+        // 2) Cambiar su estado a un valor que represente "archivada / cerrada"
+        for (Matricula m : activas) {
+            // 👇 IMPORTANTE:
+            // Usa el estado que tenga sentido en tu Enum.
+            // Si tienes un valor ARCHIVADA en EstadoMatricula, úsalo.
+            // Si no, puedes usar COMPLETADA, RETIRADA o crear uno nuevo.
+            m.setEstado(EstadoMatricula.RETIRADA); // <-- AJUSTA según tu diseño
+
+            // Opcional: si quieres registrar fecha de cierre
+            if (m.getFechaRetiro() == null) {
+                m.setFechaRetiro(LocalDateTime.now());
+            }
+        }
+
+        // 3) Guardar todos los cambios
+        matriculaRepository.saveAll(activas);
+
+        logger.info("Matrículas archivadas: {}", activas.size());
+        return activas.size();
+    }
 }
