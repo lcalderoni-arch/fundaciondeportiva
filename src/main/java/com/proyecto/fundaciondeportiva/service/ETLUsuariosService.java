@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ETLUsuariosService {
@@ -31,6 +33,12 @@ public class ETLUsuariosService {
     public ETLResponseDTO procesarExcel(MultipartFile file) {
 
         ETLResponseDTO resultado = new ETLResponseDTO();
+
+        // Para detectar duplicados dentro del mismo Excel
+        Set<String> emailsExcel = new HashSet<>();
+        Set<String> dnisExcel = new HashSet<>();
+
+        int duplicadosEnExcel = 0;
 
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
 
@@ -52,7 +60,7 @@ public class ETLUsuariosService {
                 try {
                     resultado.setProcesados(resultado.getProcesados() + 1);
 
-                    // 2) Leemos con helper que limpia tipos
+                    // 2) Leemos columnas (según el orden definido)
                     String nombre = getStringCell(row, 0);
                     String email = safeLower(getStringCell(row, 1));
                     String rolStr = safeUpper(getStringCell(row, 2));
@@ -62,62 +70,87 @@ public class ETLUsuariosService {
                     String grado = getStringCell(row, 6);
                     String telProfesor = getStringCell(row, 7);
                     String experiencia = getStringCell(row, 8);
-
-                    // 👇 NUEVO: columna 9 = password plano
                     String passwordPlano = getStringCell(row, 9);
 
-                    // 3) Validación básica de campos obligatorios
+                    // 3) Validaciones básicas
                     if (isBlank(nombre) || isBlank(email) || isBlank(rolStr)) {
                         agregarError(resultado, filaActual,
                                 "Nombre, email y rol son obligatorios.");
                         continue;
                     }
 
-                    // Validar contraseña
-                    if (passwordPlano == null || passwordPlano.isBlank()) {
+                    Rol rolEnum;
+                    try {
+                        rolEnum = Rol.valueOf(rolStr);
+                    } catch (IllegalArgumentException ex) {
                         agregarError(resultado, filaActual,
-                                "La contraseña está vacía.");
+                                "Rol inválido: " + rolStr +
+                                        ". Usa ADMINISTRADOR, ALUMNO o PROFESOR.");
                         continue;
                     }
 
-                    if (!List.of("ALUMNO", "PROFESOR", "ADMINISTRADOR").contains(rolStr)) {
-                        agregarError(resultado, filaActual, "Rol inválido: " + rolStr);
+                    // Password obligatorio en el Excel
+                    if (isBlank(passwordPlano)) {
+                        agregarError(resultado, filaActual,
+                                "La contraseña es obligatoria en la columna 10.");
+                        continue;
+                    }
+                    if (passwordPlano.length() < 6) {
+                        agregarError(resultado, filaActual,
+                                "La contraseña debe tener al menos 6 caracteres.");
                         continue;
                     }
 
+                    // 4) Validar duplicados dentro del Excel
+                    if (!emailsExcel.add(email)) {
+                        agregarError(resultado, filaActual,
+                                "Email repetido dentro del Excel: " + email);
+                        duplicadosEnExcel++;
+                        continue;
+                    }
+
+                    if (rolEnum != Rol.ADMINISTRADOR && !isBlank(dni)) {
+                        if (!dnisExcel.add(dni)) {
+                            agregarError(resultado, filaActual,
+                                    "DNI repetido dentro del Excel: " + dni);
+                            duplicadosEnExcel++;
+                            continue;
+                        }
+                    }
+
+                    // 5) Validar contra BD: email existente
                     if (usuarioRepository.existsByEmail(email)) {
-                        agregarError(resultado, filaActual, "Email repetido: " + email);
+                        agregarError(resultado, filaActual,
+                                "Email ya existente en el sistema: " + email);
                         continue;
                     }
 
-                    // 4) Validar DNI según rol
-                    if (!rolStr.equals("ADMINISTRADOR")) {
+                    // 6) Validar DNI contra BD (para alumnos y profesores)
+                    if (rolEnum != Rol.ADMINISTRADOR) {
                         if (isBlank(dni)) {
                             agregarError(resultado, filaActual,
                                     "DNI es obligatorio para ALUMNO y PROFESOR.");
                             continue;
                         }
 
-                        if (usuarioRepository.existsByPerfilAlumno_Dni(dni) ||
-                                usuarioRepository.existsByPerfilProfesor_Dni(dni)) {
+                        if (usuarioRepository.existsByPerfilAlumno_Dni(dni)
+                                || usuarioRepository.existsByPerfilProfesor_Dni(dni)) {
                             agregarError(resultado, filaActual,
-                                    "DNI repetido: " + dni);
+                                    "DNI ya existente en el sistema: " + dni);
                             continue;
                         }
                     }
 
-                    // 5) Crear usuario base
+                    // 7) Crear usuario base
                     Usuario u = new Usuario();
                     u.setNombre(nombre.trim());
                     u.setEmail(email.trim());
-                    u.setRol(Rol.valueOf(rolStr));
+                    u.setRol(rolEnum);
+                    u.setPassword(passwordEncoder.encode(passwordPlano)); // 🔐 siempre encriptada
                     u.setHabilitadoMatricula(true);
 
-                    // 🔐 Encriptar contraseña del Excel
-                    u.setPassword(passwordEncoder.encode(passwordPlano.trim()));
-
-                    // 6) Según rol, generar perfil
-                    if (rolStr.equals("ALUMNO")) {
+                    // 8) Según rol, crear perfil
+                    if (rolEnum == Rol.ALUMNO) {
 
                         // Validaciones específicas
                         if (isBlank(nivelStr) || isBlank(grado) || isBlank(telEmergencia)) {
@@ -136,16 +169,15 @@ public class ETLUsuariosService {
                         }
 
                         PerfilAlumno pa = new PerfilAlumno();
-                        pa.setDni(dni);
+                        pa.setDni(dni.trim());
                         pa.setNivel(nivelEnum);
                         pa.setGrado(grado.trim());
                         pa.setTelefonoEmergencia(telEmergencia.trim());
 
-                        // Enlazar ambas entidades
                         pa.setUsuario(u);
                         u.setPerfilAlumno(pa);
 
-                    } else if (rolStr.equals("PROFESOR")) {
+                    } else if (rolEnum == Rol.PROFESOR) {
 
                         if (isBlank(dni)) {
                             agregarError(resultado, filaActual,
@@ -165,21 +197,30 @@ public class ETLUsuariosService {
 
                         pp.setUsuario(u);
                         u.setPerfilProfesor(pp);
-                    } else {
-                        // ADMINISTRADOR -> no requiere perfil
                     }
+                    // ADMINISTRADOR -> no requiere perfil extra
 
-                    // 7) Guardamos todo
+                    // 9) Guardar en BD
                     usuarioRepository.save(u);
                     resultado.setExitosos(resultado.getExitosos() + 1);
 
                 } catch (Exception ex) {
-                    agregarError(resultado, filaActual, "Error inesperado: " + ex.getMessage());
+                    agregarError(resultado, filaActual,
+                            "Error inesperado en la fila: " + ex.getMessage());
                 }
             }
 
         } catch (Exception ex) {
             throw new RuntimeException("Error leyendo Excel: " + ex.getMessage(), ex);
+        }
+
+        if (duplicadosEnExcel > 0) {
+            agregarError(
+                    resultado,
+                    0,
+                    "⚠ Se detectaron " + duplicadosEnExcel +
+                            " registro(s) duplicado(s) dentro del archivo Excel (DNI o email)."
+            );
         }
 
         resultado.setFallidos(resultado.getProcesados() - resultado.getExitosos());
@@ -192,13 +233,10 @@ public class ETLUsuariosService {
 
     private boolean esFilaVacia(Row row) {
         if (row == null) return true;
-        // ahora revisamos columnas 0..9 (incluye password)
+        // Revisamos columnas 0..9 (10 columnas)
         for (int i = 0; i <= 9; i++) {
-            Cell cell = row.getCell(i);
-            if (cell != null && cell.getCellType() != CellType.BLANK) {
-                String v = getStringCell(row, i);
-                if (!isBlank(v)) return false;
-            }
+            String v = getStringCell(row, i);
+            if (!isBlank(v)) return false;
         }
         return true;
     }
