@@ -21,6 +21,12 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     boolean existsByEmail(String email);
 
+    // Buscar DNI en perfil alumno
+    boolean existsByPerfilAlumno_Dni(String dni);
+
+    // Buscar DNI en perfil profesor
+    boolean existsByPerfilProfesor_Dni(String dni);
+
     @Query("""
            SELECT COUNT(u) > 0
            FROM Usuario u
