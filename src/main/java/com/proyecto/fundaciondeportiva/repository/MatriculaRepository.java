@@ -22,17 +22,9 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
     List<Matricula> findByEstado(EstadoMatricula estado);
 
     // ✅ Para retirar / obtener matrícula ACTIVA sin mezclar histórico
-    Optional<Matricula> findByAlumnoIdAndSeccionIdAndEstado(
-            Long alumnoId,
-            Long seccionId,
-            EstadoMatricula estado
-    );
+    Optional<Matricula> findByAlumnoIdAndSeccionIdAndCiclo(Long alumnoId, Long seccionId, String ciclo);
 
-    // ✅ Para tu lógica con ciclo
     Optional<Matricula> findByAlumnoIdAndSeccionIdAndCicloAndEstado(
-            Long alumnoId,
-            Long seccionId,
-            String ciclo,
-            EstadoMatricula estado
+            Long alumnoId, Long seccionId, String ciclo, EstadoMatricula estado
     );
 }

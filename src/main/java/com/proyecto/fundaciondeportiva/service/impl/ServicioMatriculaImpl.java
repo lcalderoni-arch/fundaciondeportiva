@@ -50,7 +50,6 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
     @Override
     @Transactional
     public MatriculaResponseDTO matricularseEnSeccion(Long alumnoId, MatriculaRequestDTO request) {
-
         Usuario alumno = usuarioRepository.findById(alumnoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Alumno no encontrado con ID: " + alumnoId));
 
@@ -64,35 +63,42 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
         if (!seccion.getActiva()) throw new ValidacionException("La sección no está activa.");
         if (seccion.getFechaFin().isBefore(LocalDate.now())) throw new ValidacionException("La sección ya finalizó.");
 
-        // ✅ Ciclo actual (lo ideal: leer de ConfiguracionMatricula)
+        // Ciclo actual
         String cicloActual = configuracionMatriculaRepository.findFirstByOrderByIdAsc()
-                .map(ConfiguracionMatricula::getCicloActual)   // <-- crea este campo en ConfiguracionMatricula
-                .orElse("2025-II"); // fallback
+                .map(ConfiguracionMatricula::getCicloActual)
+                .orElse("2025-II");
 
-        // ✅ Validar si ya existe matrícula ACTIVA en el mismo ciclo
-        Optional<Matricula> activa = matriculaRepository.findByAlumnoIdAndSeccionIdAndCicloAndEstado(
-                alumnoId,
-                seccion.getId(),
-                cicloActual,
-                EstadoMatricula.ACTIVA
-        );
+        // Buscar si ya existe matrícula RETIRADA en el mismo ciclo
+        Optional<Matricula> existente = matriculaRepository.findByAlumnoIdAndSeccionIdAndCiclo(alumnoId, seccion.getId(), cicloActual);
 
-        if (activa.isPresent()) {
-            throw new ValidacionException("El alumno ya tiene una matrícula ACTIVA en esta sección para el ciclo " + cicloActual);
+        if (existente.isPresent()) {
+            Matricula matriculaExistente = existente.get();
+
+            if (matriculaExistente.getEstado() == EstadoMatricula.RETIRADA) {
+                // Si ya está retirada, reactivar la matrícula
+                matriculaExistente.setEstado(EstadoMatricula.ACTIVA);
+                matriculaExistente.setFechaRetiro(null);  // Eliminar la fecha de retiro
+                matriculaExistente.setObservaciones(request.getObservaciones());
+
+                Matricula guardada = matriculaRepository.save(matriculaExistente);
+                return MatriculaResponseDTO.deEntidad(guardada);
+            } else {
+                throw new ValidacionException("El alumno ya tiene una matrícula activa en esta sección.");
+            }
         }
 
-        // ✅ validar cupo
+        // Validación de cupo
         long matriculasActivas = matriculaRepository.findBySeccionIdAndEstado(seccion.getId(), EstadoMatricula.ACTIVA).size();
         if (matriculasActivas >= seccion.getCapacidad()) {
             throw new ValidacionException("La sección alcanzó su capacidad máxima.");
         }
 
-        // ✅ validar nivel
+        // Validar nivel
         if (!alumno.getPerfilAlumno().getNivel().equals(seccion.getNivelSeccion())) {
             throw new ValidacionException("No puedes matricularte. Tu nivel no coincide con la sección.");
         }
 
-        // ✅ siempre crear matrícula nueva para el ciclo actual
+        // Crear nueva matrícula
         Matricula nueva = Matricula.builder()
                 .alumno(alumno)
                 .seccion(seccion)
