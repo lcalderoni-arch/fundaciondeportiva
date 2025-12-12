@@ -2,20 +2,17 @@ package com.proyecto.fundaciondeportiva.model.entity;
 
 import com.proyecto.fundaciondeportiva.model.enums.EstadoAsistencia;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-/**
- * Entidad 'asistencias'. (NUEVA)
- */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "asistencias")
+@Table(
+        name = "asistencias",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"sesion_id", "matricula_id"})
+)
 public class Asistencia {
 
     @Id
@@ -29,12 +26,11 @@ public class Asistencia {
     @Lob
     private String observaciones;
 
-    // --- Relaciones ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sesion_id", nullable = false)
     private Sesion sesion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "alumno_id", nullable = false)
-    private Usuario alumno;
+    @JoinColumn(name = "matricula_id", nullable = false)
+    private Matricula matricula;
 }

@@ -22,6 +22,10 @@ public class ConfiguracionMatricula {
     @Column(name = "matricula_habilitada", nullable = false)
     private boolean matriculaHabilitada = true;
 
+    // ✅ NUEVO
+    @Column(name="ciclo_actual", nullable = false, length = 20)
+    private String cicloActual = "2025-II";
+
     // ⭐ NUEVO: rango de fechas de matrícula (opcional)
     @Column(name = "fecha_inicio")
     private LocalDate fechaInicio;

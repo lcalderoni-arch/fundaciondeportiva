@@ -8,17 +8,13 @@ import java.util.Optional;
 
 public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
 
-    // Ya lo debes tener:
     List<Asistencia> findBySesionId(Long sesionId);
 
-    // 👉 Nuevo: contar las asistencias de una sesión
     int countBySesionId(Long sesionId);
-
-    // 👉 Aún mejor: solo contar las asistencias con estado NO nulo
     int countBySesionIdAndEstadoIsNotNull(Long sesionId);
 
-    List<Asistencia> findByAlumnoIdAndSesion_SeccionId(Long alumnoId, Long seccionId);
+    // ✅ CLAVE: ahora se usa Matricula + Sesion
+    Optional<Asistencia> findByMatriculaIdAndSesionId(Long matriculaId, Long sesionId);
 
-    Optional<Asistencia> findBySesionIdAndAlumnoId(Long sesionId, Long alumnoId);
-
+    List<Asistencia> findByMatriculaId(Long matriculaId);
 }

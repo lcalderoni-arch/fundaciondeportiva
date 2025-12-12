@@ -50,95 +50,59 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
     @Override
     @Transactional
     public MatriculaResponseDTO matricularseEnSeccion(Long alumnoId, MatriculaRequestDTO request) {
-        logger.info("Alumno ID {} solicita matricularse en sección ID {}", alumnoId, request.getSeccionId());
 
-        try {
-            // 1. Validar que el usuario existe y es alumno
-            Usuario alumno = usuarioRepository.findById(alumnoId)
-                    .orElseThrow(() -> new RecursoNoEncontradoException("Alumno no encontrado con ID: " + alumnoId));
+        Usuario alumno = usuarioRepository.findById(alumnoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Alumno no encontrado con ID: " + alumnoId));
 
-            if (alumno.getRol() != Rol.ALUMNO) {
-                throw new ValidacionException("El usuario no es un alumno");
-            }
+        if (alumno.getRol() != Rol.ALUMNO) throw new ValidacionException("El usuario no es un alumno");
+        if (alumno.getPerfilAlumno() == null) throw new ValidacionException("El alumno no tiene perfil asociado");
+        if (Boolean.FALSE.equals(alumno.getHabilitadoMatricula())) throw new ValidacionException("El alumno no tiene habilitada la matrícula");
 
-            if (alumno.getPerfilAlumno() == null) {
-                throw new ValidacionException("El alumno no tiene un perfil de estudiante asociado");
-            }
+        Seccion seccion = seccionRepository.findById(request.getSeccionId())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Sección no encontrada con ID: " + request.getSeccionId()));
 
-            // ⭐ NUEVO: Validar que el alumno tenga habilitada la matrícula
-            if (Boolean.FALSE.equals(alumno.getHabilitadoMatricula())) {
-                throw new ValidacionException("El alumno no tiene habilitada la matrícula");
-            }
+        if (!seccion.getActiva()) throw new ValidacionException("La sección no está activa.");
+        if (seccion.getFechaFin().isBefore(LocalDate.now())) throw new ValidacionException("La sección ya finalizó.");
 
-            // 2. Validar que la sección existe y está activa
-            Seccion seccion = seccionRepository.findById(request.getSeccionId())
-                    .orElseThrow(() -> new RecursoNoEncontradoException("Sección no encontrada con ID: " + request.getSeccionId()));
+        // ✅ Ciclo actual (lo ideal: leer de ConfiguracionMatricula)
+        String cicloActual = configuracionMatriculaRepository.findFirstByOrderByIdAsc()
+                .map(ConfiguracionMatricula::getCicloActual)   // <-- crea este campo en ConfiguracionMatricula
+                .orElse("2025-II"); // fallback
 
-            if (!seccion.getActiva()) {
-                throw new ValidacionException("La sección no está activa. No se pueden aceptar nuevas matrículas.");
-            }
+        // ✅ Validar si ya existe matrícula ACTIVA en el mismo ciclo
+        Optional<Matricula> activa = matriculaRepository.findByAlumnoIdAndSeccionIdAndCicloAndEstado(
+                alumnoId,
+                seccion.getId(),
+                cicloActual,
+                EstadoMatricula.ACTIVA
+        );
 
-            // 3. Validar que la sección no haya finalizado
-            if (seccion.getFechaFin().isBefore(LocalDate.now())) {
-                throw new ValidacionException("La sección ya ha finalizado. No se pueden aceptar nuevas matrículas.");
-            }
-
-            // ⭐ 4. LÓGICA DE REACTIVACIÓN
-            Optional<Matricula> matriculaExistente = matriculaRepository.findByAlumnoIdAndSeccionId(alumnoId, request.getSeccionId());
-
-            if (matriculaExistente.isPresent()) {
-                Matricula matricula = matriculaExistente.get();
-
-                // Si ya está ACTIVA (puedes añadir otros estados aquí si aplica, como INSCRITA)
-                if (matricula.getEstado() == EstadoMatricula.ACTIVA) {
-                    throw new ValidacionException("Ya estás matriculado en esta sección");
-                }
-
-                // Si estaba RETIRADA o CANCELADA, la REACTIVAMOS
-                logger.info("Reactivando matrícula previamente retirada para el alumno ID: {}", alumnoId);
-
-                matricula.setEstado(EstadoMatricula.ACTIVA); // O EstadoMatricula.INSCRITA según tu Enum
-                matricula.setFechaMatricula(LocalDateTime.now()); // Actualizamos fecha de ingreso
-                matricula.setFechaRetiro(null);                    // Borramos fecha de retiro
-                matricula.setObservaciones(request.getObservaciones()); // Actualizamos observaciones si hay
-
-                Matricula matriculaReactivada = matriculaRepository.save(matricula);
-                return MatriculaResponseDTO.deEntidad(matriculaReactivada);
-            }
-
-            // ⭐ 5. Validar que haya cupo disponible (Solo si es nueva matrícula)
-            long matriculasActivas = matriculaRepository.countMatriculasActivasBySeccionId(request.getSeccionId());
-            if (matriculasActivas >= seccion.getCapacidad()) {
-                throw new ValidacionException("La sección ha alcanzado su capacidad máxima. No hay cupos disponibles.");
-            }
-
-            // 6. Validar que el nivel del alumno coincida con el nivel de la sección
-            if (!alumno.getPerfilAlumno().getNivel().equals(seccion.getNivelSeccion())) {
-                throw new ValidacionException(
-                        String.format("No puedes matricularte en esta sección. Tu nivel es %s y la sección es para %s",
-                                alumno.getPerfilAlumno().getNivel(), seccion.getNivelSeccion())
-                );
-            }
-
-            // 7. Crear la matrícula (SOLO SI NO EXISTÍA PREVIAMENTE)
-            Matricula nuevaMatricula = Matricula.builder()
-                    .alumno(alumno)
-                    .seccion(seccion)
-                    .estado(EstadoMatricula.ACTIVA) // O INSCRITA
-                    .observaciones(request.getObservaciones())
-                    .build();
-
-            Matricula matriculaGuardada = matriculaRepository.save(nuevaMatricula);
-            logger.info("Matrícula creada exitosamente con ID: {}", matriculaGuardada.getId());
-
-            return MatriculaResponseDTO.deEntidad(matriculaGuardada);
-
-        } catch (RecursoNoEncontradoException | ValidacionException e) {
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error al crear matrícula", e);
-            throw new RuntimeException("Error al procesar la matrícula: " + e.getMessage(), e);
+        if (activa.isPresent()) {
+            throw new ValidacionException("El alumno ya tiene una matrícula ACTIVA en esta sección para el ciclo " + cicloActual);
         }
+
+        // ✅ validar cupo
+        long matriculasActivas = matriculaRepository.findBySeccionIdAndEstado(seccion.getId(), EstadoMatricula.ACTIVA).size();
+        if (matriculasActivas >= seccion.getCapacidad()) {
+            throw new ValidacionException("La sección alcanzó su capacidad máxima.");
+        }
+
+        // ✅ validar nivel
+        if (!alumno.getPerfilAlumno().getNivel().equals(seccion.getNivelSeccion())) {
+            throw new ValidacionException("No puedes matricularte. Tu nivel no coincide con la sección.");
+        }
+
+        // ✅ siempre crear matrícula nueva para el ciclo actual
+        Matricula nueva = Matricula.builder()
+                .alumno(alumno)
+                .seccion(seccion)
+                .ciclo(cicloActual)
+                .estado(EstadoMatricula.ACTIVA)
+                .observaciones(request.getObservaciones())
+                .build();
+
+        Matricula guardada = matriculaRepository.save(nueva);
+        return MatriculaResponseDTO.deEntidad(guardada);
     }
 
     @Override
@@ -148,8 +112,14 @@ public class ServicioMatriculaImpl implements ServicioMatricula {
 
         try {
             // Buscar la matrícula
-            Matricula matricula = matriculaRepository.findByAlumnoIdAndSeccionId(alumnoId, seccionId)
-                    .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró una matrícula activa en esta sección"));
+            String cicloActual = configuracionMatriculaRepository.findFirstByOrderByIdAsc()
+                    .map(ConfiguracionMatricula::getCicloActual)
+                    .orElse("2025-II");
+
+            Matricula matricula = matriculaRepository
+                    .findByAlumnoIdAndSeccionIdAndCicloAndEstado(alumnoId, seccionId, cicloActual, EstadoMatricula.ACTIVA)
+                    .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró una matrícula activa en esta sección (ciclo " + cicloActual + ")."));
+
 
             // Validar que la matrícula esté activa
             if (matricula.getEstado() != EstadoMatricula.ACTIVA) {
