@@ -11,7 +11,7 @@ import lombok.*;
 @Entity
 @Table(
         name = "asistencias",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"sesion_id", "matricula_id"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"sesion_id","matricula_id"})
 )
 public class Asistencia {
 
@@ -21,27 +21,18 @@ public class Asistencia {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EstadoAsistencia estado;
+    private EstadoAsistencia estado; // ASISTIO, FALTA, JUSTIFICADA, TARDANZA
 
-    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String observaciones;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "sesion_id", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Sesion sesion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "matricula_id", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Matricula matricula;
 
-    // ✅ CLAVE: tu BD exige alumno_id NOT NULL
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "alumno_id", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private Usuario alumno;
+    // ❌ NO alumno aquí (porque no existe alumno_id en la tabla)
 }

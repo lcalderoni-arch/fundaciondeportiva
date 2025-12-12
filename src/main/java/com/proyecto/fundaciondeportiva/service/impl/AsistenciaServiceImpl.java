@@ -143,16 +143,8 @@ public class AsistenciaServiceImpl implements AsistenciaService {
                         nueva.setSesion(sesion);
                         nueva.setMatricula(matriculaActiva);
 
-                        // ✅ CLAVE: para llenar alumno_id (NOT NULL)
-                        nueva.setAlumno(matriculaActiva.getAlumno());
-
                         return nueva;
                     });
-
-            // ✅ por si ya existía una asistencia antigua sin alumno seteado
-            if (asistencia.getAlumno() == null) {
-                asistencia.setAlumno(matriculaActiva.getAlumno());
-            }
 
             asistencia.setEstado(reg.getEstado());
             asistencia.setObservaciones(reg.getObservaciones());
