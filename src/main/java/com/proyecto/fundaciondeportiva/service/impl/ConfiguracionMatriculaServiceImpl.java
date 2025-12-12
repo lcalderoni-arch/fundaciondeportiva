@@ -19,23 +19,24 @@ public class ConfiguracionMatriculaServiceImpl implements ConfiguracionMatricula
     private ConfiguracionMatricula obtenerConfiguracionExistente() {
         return configuracionMatriculaRepository
                 .findFirstByOrderByIdAsc()
-                .orElseThrow(() ->
-                        new IllegalStateException("No existe configuración de matrícula. Debe inicializarse.")
-                );
+                .orElseThrow(() -> new IllegalStateException(
+                        "No existe configuración de matrícula. Debe inicializarse."
+                ));
     }
 
     private ConfiguracionMatriculaResponse toResponse(ConfiguracionMatricula config) {
-        ConfiguracionMatriculaResponse resp = new ConfiguracionMatriculaResponse();
-        resp.setMatriculaHabilitada(config.isMatriculaHabilitada());
-        resp.setFechaInicio(config.getFechaInicio());
-        resp.setFechaFin(config.getFechaFin());
-        return resp;
+        return ConfiguracionMatriculaResponse.builder()
+                .matriculaHabilitada(config.isMatriculaHabilitada())
+                .fechaInicio(config.getFechaInicio())
+                .fechaFin(config.getFechaFin())
+                .build();
     }
 
     @Override
     @Transactional(readOnly = true)
     public ConfiguracionMatriculaResponse obtenerConfiguracionMatricula() {
-        return toResponse(obtenerConfiguracionExistente());
+        ConfiguracionMatricula config = obtenerConfiguracionExistente();
+        return toResponse(config);
     }
 
     @Override
@@ -44,7 +45,8 @@ public class ConfiguracionMatriculaServiceImpl implements ConfiguracionMatricula
         ConfiguracionMatricula config = obtenerConfiguracionExistente();
         config.setFechaInicio(fechaInicio);
         config.setFechaFin(fechaFin);
-        return toResponse(configuracionMatriculaRepository.save(config));
+        config = configuracionMatriculaRepository.save(config);
+        return toResponse(config);
     }
 
     @Override
@@ -52,6 +54,7 @@ public class ConfiguracionMatriculaServiceImpl implements ConfiguracionMatricula
     public ConfiguracionMatriculaResponse actualizarPermisoGlobalMatricula(boolean habilitada) {
         ConfiguracionMatricula config = obtenerConfiguracionExistente();
         config.setMatriculaHabilitada(habilitada);
-        return toResponse(configuracionMatriculaRepository.save(config));
+        config = configuracionMatriculaRepository.save(config);
+        return toResponse(config);
     }
 }
