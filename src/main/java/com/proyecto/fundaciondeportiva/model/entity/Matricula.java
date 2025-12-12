@@ -8,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @Builder
@@ -54,4 +55,7 @@ public class Matricula {
 
     @Column(length = 500)
     private String observaciones;
+
+    @OneToMany(mappedBy = "matricula", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Asistencia> asistencias;
 }

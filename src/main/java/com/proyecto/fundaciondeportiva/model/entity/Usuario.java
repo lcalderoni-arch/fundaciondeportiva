@@ -86,12 +86,6 @@ public class Usuario implements UserDetails {
     @ToString.Exclude
     private Set<Matricula> matriculas;
 
-    @OneToMany(mappedBy = "alumno")
-    @JsonIgnore
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    private Set<Asistencia> asistencias;
-
     // --- Métodos de Spring Security (UserDetails) ---
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
