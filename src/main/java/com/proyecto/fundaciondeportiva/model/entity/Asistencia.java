@@ -28,9 +28,20 @@ public class Asistencia {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sesion_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Sesion sesion;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "matricula_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Matricula matricula;
+
+    // ✅ CLAVE: tu BD exige alumno_id NOT NULL
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "alumno_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Usuario alumno;
 }

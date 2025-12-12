@@ -59,22 +59,17 @@ public class AsistenciaServiceImpl implements AsistenciaService {
         Long seccionId = sesion.getSeccion().getId();
         String cicloActual = obtenerCicloActual();
 
-        // 1) Matrículas activas de la sección (ideal: filtrar por ciclo)
-        // Si aún no tienes ciclo en BD, usa findBySeccionIdAndEstado(...)
         List<Matricula> matriculas = matriculaRepository
                 .findBySeccionIdAndEstado(seccionId, EstadoMatricula.ACTIVA)
                 .stream()
-                .filter(m -> cicloActual.equals(m.getCiclo())) // ✅ si ya agregaste ciclo
+                .filter(m -> cicloActual.equals(m.getCiclo()))
                 .collect(Collectors.toList());
 
-        // 2) Asistencias ya registradas para esa sesión
         List<Asistencia> asistencias = asistenciaRepository.findBySesionId(sesionId);
 
-        // Mapear por MatriculaId (no por alumnoId)
         Map<Long, Asistencia> asistenciaPorMatriculaId = asistencias.stream()
                 .collect(Collectors.toMap(a -> a.getMatricula().getId(), a -> a, (a1, a2) -> a1));
 
-        // 3) Armar DTOs
         List<AsistenciaDetalleAlumnoDTO> resultado = new ArrayList<>();
 
         for (Matricula m : matriculas) {
@@ -128,25 +123,36 @@ public class AsistenciaServiceImpl implements AsistenciaService {
         Long seccionId = sesion.getSeccion().getId();
         String cicloActual = obtenerCicloActual();
 
-        // Por cada alumno recibido
         for (RegistroAsistenciaAlumnoRequest reg : request.getRegistros()) {
 
-            // ✅ 1) Obtener la matrícula ACTIVA del alumno en ESTA sección y ciclo
             Matricula matriculaActiva = matriculaRepository
-                    .findByAlumnoIdAndSeccionIdAndCicloAndEstado(reg.getAlumnoId(), seccionId, cicloActual, EstadoMatricula.ACTIVA)
+                    .findByAlumnoIdAndSeccionIdAndCicloAndEstado(
+                            reg.getAlumnoId(),
+                            seccionId,
+                            cicloActual,
+                            EstadoMatricula.ACTIVA
+                    )
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "No existe matrícula ACTIVA para el alumno en esta sección (ciclo " + cicloActual + ")."
                     ));
 
-            // ✅ 2) Buscar asistencia por Matricula + Sesion
             Asistencia asistencia = asistenciaRepository
                     .findByMatriculaIdAndSesionId(matriculaActiva.getId(), sesion.getId())
                     .orElseGet(() -> {
                         Asistencia nueva = new Asistencia();
                         nueva.setSesion(sesion);
                         nueva.setMatricula(matriculaActiva);
+
+                        // ✅ CLAVE: para llenar alumno_id (NOT NULL)
+                        nueva.setAlumno(matriculaActiva.getAlumno());
+
                         return nueva;
                     });
+
+            // ✅ por si ya existía una asistencia antigua sin alumno seteado
+            if (asistencia.getAlumno() == null) {
+                asistencia.setAlumno(matriculaActiva.getAlumno());
+            }
 
             asistencia.setEstado(reg.getEstado());
             asistencia.setObservaciones(reg.getObservaciones());
@@ -164,15 +170,14 @@ public class AsistenciaServiceImpl implements AsistenciaService {
 
         String cicloActual = obtenerCicloActual();
 
-        // ✅ Matrícula ACTIVA del alumno en esa sección (del ciclo actual)
         Matricula matriculaActiva = matriculaRepository
                 .findByAlumnoIdAndSeccionIdAndCicloAndEstado(alumno.getId(), seccionId, cicloActual, EstadoMatricula.ACTIVA)
-                .orElseThrow(() -> new ResourceNotFoundException("No tienes matrícula activa en esta sección (ciclo " + cicloActual + ")."));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No tienes matrícula activa en esta sección (ciclo " + cicloActual + ")."
+                ));
 
-        // ✅ Traer asistencias por matrícula (NO por alumno+sección)
         List<Asistencia> asistencias = asistenciaRepository.findByMatriculaId(matriculaActiva.getId());
 
-        // Ordenar por sesión (ideal por fecha/hora, aquí por ID)
         asistencias.sort(Comparator.comparing(a -> a.getSesion().getId()));
 
         List<AsistenciaAlumnoSemanaDTO> resultado = new ArrayList<>();
