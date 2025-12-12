@@ -11,4 +11,7 @@ public interface ConfiguracionMatriculaService {
     ConfiguracionMatriculaResponse actualizarFechasMatricula(LocalDate fechaInicio, LocalDate fechaFin);
 
     ConfiguracionMatriculaResponse actualizarPermisoGlobalMatricula(boolean habilitada);
+
+    ConfiguracionMatriculaResponse actualizarCicloActual(String cicloActual);
+
 }

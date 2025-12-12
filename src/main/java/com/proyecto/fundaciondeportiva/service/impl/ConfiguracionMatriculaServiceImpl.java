@@ -1,6 +1,8 @@
 package com.proyecto.fundaciondeportiva.service.impl;
 
 import com.proyecto.fundaciondeportiva.dto.response.ConfiguracionMatriculaResponse;
+import com.proyecto.fundaciondeportiva.exception.RecursoNoEncontradoException;
+import com.proyecto.fundaciondeportiva.exception.ValidacionException;
 import com.proyecto.fundaciondeportiva.model.entity.ConfiguracionMatricula;
 import com.proyecto.fundaciondeportiva.repository.ConfiguracionMatriculaRepository;
 import com.proyecto.fundaciondeportiva.service.ConfiguracionMatriculaService;
@@ -16,45 +18,62 @@ public class ConfiguracionMatriculaServiceImpl implements ConfiguracionMatricula
     @Autowired
     private ConfiguracionMatriculaRepository configuracionMatriculaRepository;
 
-    private ConfiguracionMatricula obtenerConfiguracionExistente() {
-        return configuracionMatriculaRepository
-                .findFirstByOrderByIdAsc()
-                .orElseThrow(() -> new IllegalStateException(
-                        "No existe configuración de matrícula. Debe inicializarse."
-                ));
-    }
-
-    private ConfiguracionMatriculaResponse toResponse(ConfiguracionMatricula config) {
-        return ConfiguracionMatriculaResponse.builder()
-                .matriculaHabilitada(config.isMatriculaHabilitada())
-                .fechaInicio(config.getFechaInicio())
-                .fechaFin(config.getFechaFin())
-                .build();
-    }
-
     @Override
     @Transactional(readOnly = true)
     public ConfiguracionMatriculaResponse obtenerConfiguracionMatricula() {
-        ConfiguracionMatricula config = obtenerConfiguracionExistente();
-        return toResponse(config);
+        ConfiguracionMatricula config = configuracionMatriculaRepository.findFirstByOrderByIdAsc()
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe configuración de matrícula."));
+
+        return ConfiguracionMatriculaResponse.deEntidad(config);
     }
 
     @Override
     @Transactional
     public ConfiguracionMatriculaResponse actualizarFechasMatricula(LocalDate fechaInicio, LocalDate fechaFin) {
-        ConfiguracionMatricula config = obtenerConfiguracionExistente();
+        ConfiguracionMatricula config = configuracionMatriculaRepository.findFirstByOrderByIdAsc()
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe configuración de matrícula."));
+
+        if (fechaInicio == null || fechaFin == null) {
+            throw new ValidacionException("Fecha inicio y fecha fin son obligatorias.");
+        }
+        if (fechaInicio.isAfter(fechaFin)) {
+            throw new ValidacionException("La fecha de inicio no puede ser mayor que la fecha de cierre.");
+        }
+
         config.setFechaInicio(fechaInicio);
         config.setFechaFin(fechaFin);
-        config = configuracionMatriculaRepository.save(config);
-        return toResponse(config);
+
+        ConfiguracionMatricula guardada = configuracionMatriculaRepository.save(config);
+        return ConfiguracionMatriculaResponse.deEntidad(guardada);
     }
 
     @Override
     @Transactional
-    public ConfiguracionMatriculaResponse actualizarPermisoGlobalMatricula(boolean habilitada) {
-        ConfiguracionMatricula config = obtenerConfiguracionExistente();
-        config.setMatriculaHabilitada(habilitada);
-        config = configuracionMatriculaRepository.save(config);
-        return toResponse(config);
+    public ConfiguracionMatriculaResponse actualizarPermisoGlobalMatricula(boolean habilitado) {
+        ConfiguracionMatricula config = configuracionMatriculaRepository.findFirstByOrderByIdAsc()
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe configuración de matrícula."));
+
+        config.setMatriculaHabilitada(habilitado);
+
+        ConfiguracionMatricula guardada = configuracionMatriculaRepository.save(config);
+        return ConfiguracionMatriculaResponse.deEntidad(guardada);
+    }
+
+    // ✅ NUEVO
+    @Override
+    @Transactional
+    public ConfiguracionMatriculaResponse actualizarCicloActual(String cicloActual) {
+        ConfiguracionMatricula config = configuracionMatriculaRepository.findFirstByOrderByIdAsc()
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe configuración de matrícula."));
+
+        String valor = (cicloActual == null) ? "" : cicloActual.trim();
+        if (valor.isEmpty()) {
+            throw new ValidacionException("El ciclo actual no puede estar vacío.");
+        }
+
+        config.setCicloActual(valor);
+
+        ConfiguracionMatricula guardada = configuracionMatriculaRepository.save(config);
+        return ConfiguracionMatriculaResponse.deEntidad(guardada);
     }
 }

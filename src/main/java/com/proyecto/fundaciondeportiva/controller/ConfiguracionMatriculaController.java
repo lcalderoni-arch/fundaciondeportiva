@@ -77,4 +77,18 @@ public class ConfiguracionMatriculaController {
                 configuracionMatriculaService.actualizarPermisoGlobalMatricula(request.isHabilitado());
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping(
+            value = "/matricula/ciclo",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<ConfiguracionMatriculaResponse> actualizarCiclo(
+            @RequestBody com.proyecto.fundaciondeportiva.dto.request.CambiarCicloRequest request
+    ) {
+        ConfiguracionMatriculaResponse response =
+                configuracionMatriculaService.actualizarCicloActual(request.getCicloActual());
+        return ResponseEntity.ok(response);
+    }
 }

@@ -59,6 +59,8 @@ public class MatriculaResponseDTO {
     // 🔹 NUEVO: correo del profesor
     private String correoProfesor;
 
+    private String ciclo;
+
     public static MatriculaResponseDTO deEntidad(Matricula matricula) {
         if (matricula == null) {
             return null;
@@ -108,6 +110,7 @@ public class MatriculaResponseDTO {
                         matricula.getSeccion().getProfesor().getPerfilProfesor().getDni() : null)
                 // 🔹 NUEVO: correo del profesor (asumiendo que está en Usuario.email)
                 .correoProfesor(matricula.getSeccion().getProfesor().getEmail())
+                .ciclo(matricula.getCiclo())
                 .build();
     }
 }
