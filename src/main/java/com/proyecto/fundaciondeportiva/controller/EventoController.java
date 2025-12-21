@@ -25,7 +25,7 @@ public class EventoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMINISTRADOR','PROFESOR','ALUMNO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','PROFESOR','ALUMNO')")
     public ResponseEntity<Void> registrarEvento(@RequestBody EventoRequest request) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
