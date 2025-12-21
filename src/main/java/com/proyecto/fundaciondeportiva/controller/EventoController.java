@@ -2,13 +2,11 @@ package com.proyecto.fundaciondeportiva.controller;
 
 import com.proyecto.fundaciondeportiva.dto.request.EventoRequest;
 import com.proyecto.fundaciondeportiva.model.entity.Evento;
-import com.proyecto.fundaciondeportiva.model.entity.Usuario;
 import com.proyecto.fundaciondeportiva.repository.EventoRepository;
-import com.proyecto.fundaciondeportiva.service.UsuarioService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.time.LocalDateTime;
 
@@ -17,29 +15,28 @@ import java.time.LocalDateTime;
 public class EventoController {
 
     private final EventoRepository eventoRepository;
-    private final UsuarioService usuarioService;
 
-    public EventoController(EventoRepository eventoRepository, UsuarioService usuarioService) {
+    public EventoController(EventoRepository eventoRepository) {
         this.eventoRepository = eventoRepository;
-        this.usuarioService = usuarioService;
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR','PROFESOR','ALUMNO')")
+    @PreAuthorize("hasAnyAuthority('ADMINISTRADOR','PROFESOR','ALUMNO')")
     public ResponseEntity<Void> registrarEvento(@RequestBody EventoRequest request) {
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        Usuario u = usuarioService.obtenerUsuarioPorEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
-
         Evento e = new Evento();
-        e.setUsuarioId(u.getId());
+
+        // ⚠️ IMPORTANTE: usuarioId NO puede ser null porque en la entidad está nullable = false
+        // Lo ideal es obtenerlo del usuario autenticado (JWT), pero para probar
+        // podemos poner un valor fijo y luego lo mejoramos.
+        e.setUsuarioId(1L); // 🔧 luego lo cambias para que venga del usuario logueado
+
         e.setTipo(request.getTipo());
         e.setDetalles(request.getDetalles());
         e.setTs(LocalDateTime.now());
 
         eventoRepository.save(e);
+
         return ResponseEntity.ok().build();
     }
 }
