@@ -27,7 +27,7 @@ public class DocenteProgresoController {
     private UsuarioService usuarioService;
 
     @GetMapping("/progreso")
-    @PreAuthorize("hasRole('PROFESOR')")
+    @PreAuthorize("hasAuthority('PROFESOR')")
     @Transactional
     public ResponseEntity<ProgresoDocenteResumenDTO> obtenerProgresoDocente() {
 
