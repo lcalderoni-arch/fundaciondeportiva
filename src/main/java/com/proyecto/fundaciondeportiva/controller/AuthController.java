@@ -16,6 +16,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -35,6 +36,9 @@ public class AuthController {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private UserDetailsService userDetailsService;
+
     @PostMapping("/login")
     public ResponseEntity<LoginOutputDTO> login(
             @Valid @RequestBody LoginInputDTO loginInputDTO,
@@ -47,10 +51,10 @@ public class AuthController {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuario = usuarioRepository.findByEmail(userDetails.getUsername()).orElseThrow();
 
-        // ✅ Access para Authorization (corto)
+        // ✅ Access (corto) -> lo envías en el body
         String accessToken = jwtService.generateAccessToken(userDetails);
 
-        // ✅ Refresh en cookie HttpOnly (largo)
+        // ✅ Refresh (largo) -> cookie HttpOnly
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
         String dni = null;
@@ -65,12 +69,11 @@ public class AuthController {
             nivelAlumno = usuario.getPerfilAlumno().getNivel() != null
                     ? usuario.getPerfilAlumno().getNivel().name()
                     : null;
-
             gradoAlumno = usuario.getPerfilAlumno().getGrado();
         }
 
         LoginOutputDTO responseBody = LoginOutputDTO.builder()
-                .token(accessToken) // seguimos usando el campo token para access
+                .token(accessToken)
                 .nombre(usuario.getNombre())
                 .rol(usuario.getRol())
                 .email(usuario.getEmail())
@@ -79,17 +82,14 @@ public class AuthController {
                 .gradoAlumno(gradoAlumno)
                 .build();
 
-        // IMPORTANTÍSIMO:
-        // - en producción (https + diferente dominio): SameSite=None; Secure
-        // - en local http: SameSite=Lax y secure=false
         boolean isHttps = request.isSecure();
 
         ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE_NAME, refreshToken)
                 .httpOnly(true)
-                .secure(isHttps)            // local http => false, prod https => true
-                .path("/api/auth")          // cookie solo para auth endpoints
+                .secure(isHttps)                 // prod https: true / local http: false
+                .path("/api/auth")               // solo se manda a /api/auth/*
                 .sameSite(isHttps ? "None" : "Lax")
-                .maxAge(60L * 60 * 24 * 7)  // 7 días
+                .maxAge(60L * 60 * 24 * 7)       // 7 días
                 .build();
 
         return ResponseEntity.ok()
@@ -104,18 +104,18 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
 
-        String email;
+        final String email;
         try {
             email = jwtService.extractUsername(refreshToken);
         } catch (Exception e) {
             return ResponseEntity.status(401).build();
         }
 
-        UserDetails userDetails = usuarioRepository.findByEmail(email)
-                .map(u -> (UserDetails) u)
-                .orElse(null);
-
-        if (userDetails == null) {
+        // ✅ carga user “oficial” del security
+        UserDetails userDetails;
+        try {
+            userDetails = userDetailsService.loadUserByUsername(email);
+        } catch (Exception e) {
             return ResponseEntity.status(401).build();
         }
 
@@ -123,7 +123,7 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
 
-        // emitir nuevo access token
+        // ✅ nuevo access token
         String newAccessToken = jwtService.generateAccessToken(userDetails);
 
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();

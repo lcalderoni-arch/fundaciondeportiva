@@ -3,7 +3,6 @@ package com.proyecto.fundaciondeportiva.config;
 import com.proyecto.fundaciondeportiva.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -37,37 +35,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // Rutas públicas auth (login/refresh/logout)
+        // ✅ auth público
         if (path.startsWith("/api/auth/")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Preflight
+        // ✅ preflight
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 1) Header Authorization primero
-        String jwt = null;
-        final String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwt = authHeader.substring(7);
-        }
-
-        // 2) (Opcional) si quieres soporte cookie access (NO recomendado), déjalo.
-        if (jwt == null) {
-            jwt = getJwtFromCookies(request); // busca "jwt_token"
-        }
-
-        if (jwt == null || jwt.isBlank()) {
+        // ✅ 1) SOLO Authorization header
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        long dotCount = jwt.chars().filter(ch -> ch == '.').count();
-        if (dotCount != 2) {
+        String jwt = authHeader.substring(7).trim();
+        if (jwt.isBlank()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // sanity check de formato JWT (3 partes)
+        long dots = jwt.chars().filter(ch -> ch == '.').count();
+        if (dots != 2) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -76,34 +71,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String userEmail = jwtService.extractUsername(jwt);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
-                // ✅ solo ACCESS token sirve para autenticar requests
+                // ✅ Solo ACCESS token autentica requests
                 if (jwtService.validateAccessToken(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
         } catch (Exception ignored) {
-            // no bloqueamos request, solo no autenticamos
+            // no bloquea, solo no autentica
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private String getJwtFromCookies(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) return null;
-
-        return Arrays.stream(cookies)
-                .filter(cookie -> "jwt_token".equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
     }
 }
