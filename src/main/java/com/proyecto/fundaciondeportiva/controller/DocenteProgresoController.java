@@ -31,6 +31,10 @@ public class DocenteProgresoController {
     @Transactional
     public ResponseEntity<ProgresoDocenteResumenDTO> obtenerProgresoDocente() {
 
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("AUTH name = " + auth.getName());
+        System.out.println("AUTH authorities = " + auth.getAuthorities());
+
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Usuario profesor = usuarioService.obtenerUsuarioPorEmail(email)
