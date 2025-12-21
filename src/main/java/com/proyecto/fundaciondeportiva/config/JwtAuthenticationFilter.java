@@ -35,86 +35,71 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // ⭐ Ignorar rutas públicas COMPLETAMENTE
         String path = request.getRequestURI();
 
-        logger.info("🔍 JwtFilter procesando: " + path);
-
+        // Rutas públicas auth (login/refresh/logout)
         if (path.startsWith("/api/auth/")) {
-            logger.info("✅ Ruta pública detectada, saltando JWT: " + path);
             filterChain.doFilter(request, response);
             return;
         }
 
-        // ⭐ Saltar OPTIONS (preflight) sin validar token
+        // Preflight
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // ✅ BUSCAR TOKEN PRIMERO EN HEADER, LUEGO EN COOKIES
+        // 1) Header Authorization primero
         String jwt = null;
-
-        // 1. Intentar obtener de header Authorization
         final String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
         }
 
-        // 2. Si no está en header, intentar en cookie
+        // 2) (Opcional) si quieres soporte cookie access (NO recomendado), déjalo.
         if (jwt == null) {
-            jwt = getJwtFromCookies(request);
+            jwt = getJwtFromCookies(request); // busca "jwt_token"
         }
 
-        // 3. Si no hay token en ningún lado, continuar sin autenticar
         if (jwt == null || jwt.isBlank()) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 4. Validar formato básico del JWT (3 partes separadas por 2 puntos)
         long dotCount = jwt.chars().filter(ch -> ch == '.').count();
         if (dotCount != 2) {
-            // Token evidentemente inválido, no intentamos parsearlo para evitar warnings ruidosos
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            // 5. Extraer email del token
             String userEmail = jwtService.extractUsername(jwt);
 
-            // 6. Si hay email y no está autenticado aún
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-                // 7. Validar token
-                if (jwtService.validateToken(jwt, userDetails)) {
+                // ✅ solo ACCESS token sirve para autenticar requests
+                if (jwtService.validateAccessToken(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
                             userDetails.getAuthorities()
                     );
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-        } catch (Exception e) {
-            // Solo loguear, NO bloquear la petición
-            logger.warn("Error al procesar el token JWT: " + e.getMessage());
+        } catch (Exception ignored) {
+            // no bloqueamos request, solo no autenticamos
         }
 
-        // SIEMPRE continuar con el chain
         filterChain.doFilter(request, response);
     }
 
     private String getJwtFromCookies(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            return null;
-        }
+        if (cookies == null) return null;
+
         return Arrays.stream(cookies)
                 .filter(cookie -> "jwt_token".equals(cookie.getName()))
                 .map(Cookie::getValue)

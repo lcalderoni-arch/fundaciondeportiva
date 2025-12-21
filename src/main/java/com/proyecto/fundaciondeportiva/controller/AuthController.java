@@ -3,26 +3,28 @@ package com.proyecto.fundaciondeportiva.controller;
 import com.proyecto.fundaciondeportiva.dto.input.LoginInputDTO;
 import com.proyecto.fundaciondeportiva.dto.output.LoginOutputDTO;
 import com.proyecto.fundaciondeportiva.model.entity.Usuario;
-import com.proyecto.fundaciondeportiva.model.enums.Rol; // ⭐ AGREGAR ESTA LÍNEA
+import com.proyecto.fundaciondeportiva.model.enums.Rol;
 import com.proyecto.fundaciondeportiva.repository.UsuarioRepository;
 import com.proyecto.fundaciondeportiva.service.JwtService;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final String REFRESH_COOKIE_NAME = "refresh_token";
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -36,44 +38,30 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginOutputDTO> login(
             @Valid @RequestBody LoginInputDTO loginInputDTO,
-            HttpServletResponse response
+            HttpServletRequest request
     ) {
-        // 1. Spring Security autentica al usuario
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginInputDTO.getEmail(), loginInputDTO.getPassword())
         );
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        // 2. Buscamos los datos completos del usuario para la respuesta
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuario = usuarioRepository.findByEmail(userDetails.getUsername()).orElseThrow();
 
-        // 3. Generamos el token JWT
-        String token = jwtService.generateToken(userDetails);
+        // ✅ Access para Authorization (corto)
+        String accessToken = jwtService.generateAccessToken(userDetails);
 
-        // 4a. Crear la cookie
-        Cookie jwtCookie = new Cookie("jwt_token", token);
-        jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true);
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(60 * 60 * 10);
-
-        response.addCookie(jwtCookie);
+        // ✅ Refresh en cookie HttpOnly (largo)
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
 
         String dni = null;
         String nivelAlumno = null;
         String gradoAlumno = null;
 
-        // Si es PROFESOR, obtenemos DNI del perfil profesor (como ya lo tenías)
         if (usuario.getRol() == Rol.PROFESOR && usuario.getPerfilProfesor() != null) {
             dni = usuario.getPerfilProfesor().getDni();
         }
 
-        // ⭐ SI ES ALUMNO, sacamos NIVEL y GRADO del PerfilAlumno
         if (usuario.getRol() == Rol.ALUMNO && usuario.getPerfilAlumno() != null) {
-            // si quieres también puedes mandar el dni del alumno:
-            // dni = usuario.getPerfilAlumno().getDni();
-
-            // Si 'nivel' es un enum, .name() te devolverá "INICIAL", "PRIMARIA", etc.
             nivelAlumno = usuario.getPerfilAlumno().getNivel() != null
                     ? usuario.getPerfilAlumno().getNivel().name()
                     : null;
@@ -81,30 +69,98 @@ public class AuthController {
             gradoAlumno = usuario.getPerfilAlumno().getGrado();
         }
 
-        // 4. Creamos y devolvemos la respuesta
         LoginOutputDTO responseBody = LoginOutputDTO.builder()
-                .token(token)
+                .token(accessToken) // seguimos usando el campo token para access
                 .nombre(usuario.getNombre())
                 .rol(usuario.getRol())
                 .email(usuario.getEmail())
                 .dni(dni)
-                .nivelAlumno(nivelAlumno)   // ⭐ NUEVO
-                .gradoAlumno(gradoAlumno)   // ⭐ NUEVO
+                .nivelAlumno(nivelAlumno)
+                .gradoAlumno(gradoAlumno)
+                .build();
+
+        // IMPORTANTÍSIMO:
+        // - en producción (https + diferente dominio): SameSite=None; Secure
+        // - en local http: SameSite=Lax y secure=false
+        boolean isHttps = request.isSecure();
+
+        ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE_NAME, refreshToken)
+                .httpOnly(true)
+                .secure(isHttps)            // local http => false, prod https => true
+                .path("/api/auth")          // cookie solo para auth endpoints
+                .sameSite(isHttps ? "None" : "Lax")
+                .maxAge(60L * 60 * 24 * 7)  // 7 días
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(responseBody);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginOutputDTO> refresh(HttpServletRequest request) {
+        String refreshToken = readCookie(request, REFRESH_COOKIE_NAME);
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String email;
+        try {
+            email = jwtService.extractUsername(refreshToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).build();
+        }
+
+        UserDetails userDetails = usuarioRepository.findByEmail(email)
+                .map(u -> (UserDetails) u)
+                .orElse(null);
+
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        if (!jwtService.validateRefreshToken(refreshToken, userDetails)) {
+            return ResponseEntity.status(401).build();
+        }
+
+        // emitir nuevo access token
+        String newAccessToken = jwtService.generateAccessToken(userDetails);
+
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+        LoginOutputDTO responseBody = LoginOutputDTO.builder()
+                .token(newAccessToken)
+                .nombre(usuario.getNombre())
+                .rol(usuario.getRol())
+                .email(usuario.getEmail())
                 .build();
 
         return ResponseEntity.ok(responseBody);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletResponse response) {
-        Cookie jwtCookie = new Cookie("jwt_token", null);
-        jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true);
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(0);
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        boolean isHttps = request.isSecure();
 
-        response.addCookie(jwtCookie);
+        ResponseCookie deleteCookie = ResponseCookie.from(REFRESH_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(isHttps)
+                .path("/api/auth")
+                .sameSite(isHttps ? "None" : "Lax")
+                .maxAge(0)
+                .build();
 
-        return ResponseEntity.ok("Cierre de sesión exitoso");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body("Cierre de sesión exitoso");
+    }
+
+    private String readCookie(HttpServletRequest request, String cookieName) {
+        if (request.getCookies() == null) return null;
+        return Arrays.stream(request.getCookies())
+                .filter(c -> cookieName.equals(c.getName()))
+                .map(c -> c.getValue())
+                .findFirst()
+                .orElse(null);
     }
 }

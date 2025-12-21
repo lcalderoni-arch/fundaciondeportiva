@@ -69,12 +69,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 👇 ARCHIVOS PÚBLICOS
                         .requestMatchers("/uploads/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        // Ya NO es pública
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/crear").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
                         .anyRequest().authenticated()
