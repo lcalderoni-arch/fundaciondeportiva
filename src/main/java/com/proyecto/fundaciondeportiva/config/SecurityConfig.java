@@ -22,6 +22,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.springframework.security.config.Customizer;
+
 import java.util.List;
 
 @Configuration
@@ -65,35 +67,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            AuthenticationProvider authenticationProvider,
-            JwtAuthenticationFilter jwtAuthFilter
-    ) throws Exception {
-
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   AuthenticationProvider authenticationProvider,
+                                                   JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http
-                // ✅ Usa el corsConfigurationSource automáticamente
-                .cors(Customizer.withDefaults())
+                .cors(Customizer.withDefaults()) // ✅ IMPORTANTE
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // ✅ recursos públicos
                         .requestMatchers("/uploads/**").permitAll()
-
-                        // ✅ auth público
-                        .requestMatchers("/api/auth/**").permitAll()
-
-                        // ✅ (opcional) si quieres swagger público
-                        // .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-                        // ✅ lo demás protegido
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                         .anyRequest().authenticated()
                 )
-
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
