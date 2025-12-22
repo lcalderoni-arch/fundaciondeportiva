@@ -47,14 +47,14 @@ public class SeccionController {
             logger.info("Solicitud de secciones del profesor con email: {}", emailProfesor);
 
             // 2. Obtener el perfil completo del profesor (usando el método correcto)
-            UsuarioResponse usuarioDTO = servicioUsuario.obtenerUsuarioResponsePorEmail(emailProfesor); // 👈 CORREGIDO
+            UsuarioResponse usuarioDTO = servicioUsuario.obtenerUsuarioResponsePorEmail(emailProfesor); // CORREGIDO
 
             // 3. Validar que tenga perfil de profesor
-            if (usuarioDTO.getDniProfesor() == null) { // 👈 CORREGIDO
+            if (usuarioDTO.getDniProfesor() == null) { // CORREGIDO
                 throw new RuntimeException("El usuario no tiene un perfil de profesor asociado");
             }
 
-            String dniProfesor = usuarioDTO.getDniProfesor(); // 👈 CORREGIDO
+            String dniProfesor = usuarioDTO.getDniProfesor(); // CORREGIDO
             logger.info("DNI del profesor identificado: {}", dniProfesor);
 
             // 4. Buscar secciones por DNI del profesor
