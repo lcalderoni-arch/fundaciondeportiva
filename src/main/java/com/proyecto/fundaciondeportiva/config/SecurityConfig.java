@@ -61,7 +61,7 @@ public class SecurityConfig {
                                                    AuthenticationProvider authenticationProvider,
                                                    JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http
-                .cors(Customizer.withDefaults()) // ✅ hace que use tu CorsConfigurationSource
+                .cors(Customizer.withDefaults()) // hace que use tu CorsConfigurationSource
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
