@@ -55,7 +55,7 @@ public class MonitorAsistenciaController {
         }
     }
 
-    // ⭐ Solo admin / coordinación, tú decides los roles
+    // Solo admin / coordinación, tú decides los roles
     @GetMapping("/asistencias/hoy")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','COORDINADOR','PROFESOR')")
     public ResponseEntity<List<MonitorAsistenciaSesionDTO>> monitorAsistenciasHoy() {
@@ -112,7 +112,7 @@ public class MonitorAsistenciaController {
         return MonitorAsistenciaSesionDTO.builder()
                 .sesionId(sesion.getId())
                 .seccionId(seccion.getId())
-                .nombreSeccion(seccion.getNombre())        // 👈 NUEVO, lo mantienes
+                .nombreSeccion(seccion.getNombre())        // NUEVO, lo mantienes
                 .curso(seccion.getCurso().getTitulo())
                 .gradoSeccion(seccion.getGradoSeccion())
                 .nivelSeccion(seccion.getNivelSeccion().name())
