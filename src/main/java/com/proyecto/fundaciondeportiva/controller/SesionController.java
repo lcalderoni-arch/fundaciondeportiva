@@ -34,7 +34,7 @@ public class SesionController {
 
         List<Sesion> sesiones = sesionRepository.findBySeccion_IdOrderByFechaAsc(seccion.getId());
 
-        // 🔍 DEBUG
+        // DEBUG
         System.out.println("=== DEBUG SESIONES ===");
         System.out.println("Sección solicitada ID path: " + seccionId + " | entidad.getId(): " + seccion.getId());
         System.out.println("Total sesiones encontradas: " + sesiones.size());
