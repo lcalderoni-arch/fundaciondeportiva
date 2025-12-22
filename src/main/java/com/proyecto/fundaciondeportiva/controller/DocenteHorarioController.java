@@ -33,7 +33,7 @@ public class DocenteHorarioController {
         Usuario profesor = usuarioService.obtenerUsuarioPorEmail(email)
                 .orElseThrow(() -> new RuntimeException("Profesor autenticado no encontrado"));
 
-        Long profesorId = profesor.getId(); // 👈 usamos el ID del usuario
+        Long profesorId = profesor.getId(); // usamos el ID del usuario
 
         List<Sesion> sesiones = sesionRepository
                 .findBySeccion_Profesor_IdOrderByFechaAsc(profesorId);
