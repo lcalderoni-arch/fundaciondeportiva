@@ -20,6 +20,10 @@
 
     <properties>
         <java.version>17</java.version>
+
+        <!-- Encodings consistentes (CI/Linux) -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <dependencies>
@@ -41,7 +45,7 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Apache POI para leer Excel -->
+        <!-- Apache POI -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
@@ -103,7 +107,27 @@
     </dependencies>
 
     <build>
+
+        <!-- ✅ CLAVE: No filtrar application.properties (evita MalformedInputException) -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+
         <plugins>
+
+            <!-- Maven resources (solo para declarar encoding; no filtramos) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
             <!-- Compiler plugin con Lombok -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -135,6 +159,8 @@
                     </excludes>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
+
 </project>
