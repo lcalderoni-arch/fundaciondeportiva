@@ -23,7 +23,7 @@ public class RecursoController {
     @Autowired
     private RecursoService recursoService;
 
-    // 🔹 Listar recursos de una sesión (docente, admin, alumno)
+    // Listar recursos de una sesión (docente, admin, alumno)
     @GetMapping("/sesion/{sesionId}")
     @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR','ALUMNO')")
     public ResponseEntity<List<RecursoDTO>> listarPorSesion(@PathVariable Long sesionId) {
@@ -31,7 +31,7 @@ public class RecursoController {
         return ResponseEntity.ok(lista);
     }
 
-    // 🔹 Crear recurso tipo LINK / simple (JSON)
+    // Crear recurso tipo LINK / simple (JSON)
     @PostMapping(
             value = "/crear",
             consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -47,7 +47,7 @@ public class RecursoController {
         return ResponseEntity.ok(dto);
     }
 
-    // 🔹 Subir archivo y asociarlo a una sesión
+    // Subir archivo y asociarlo a una sesión
     @PostMapping(
             value = "/sesion/{sesionId}/archivo",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -79,7 +79,7 @@ public class RecursoController {
         return ResponseEntity.ok(dto);
     }
 
-    // 🔹 ACTUALIZAR recurso (LINK o archivo)
+    // ACTUALIZAR recurso (LINK o archivo)
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR')")
@@ -93,7 +93,7 @@ public class RecursoController {
         return ResponseEntity.ok(dto);
     }
 
-    // 🔹 ELIMINAR recurso
+    // ELIMINAR recurso
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('PROFESOR','ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarRecurso(
