@@ -24,7 +24,7 @@ public class UsuarioOutputDTO {
     private Rol rol;
     private LocalDateTime fechaCreacion;
 
-    // 👉 NUEVO: estado de permiso de matrícula
+    // NUEVO: estado de permiso de matrícula
     private Boolean habilitadoMatricula;
 
     // Alumno
