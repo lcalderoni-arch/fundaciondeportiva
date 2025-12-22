@@ -55,7 +55,7 @@ public class MonitorAsistenciaController {
         }
     }
 
-    // Solo admin / coordinación, tú decides los roles
+    // Solo admin / coordinación
     @GetMapping("/asistencias/hoy")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','COORDINADOR','PROFESOR')")
     public ResponseEntity<List<MonitorAsistenciaSesionDTO>> monitorAsistenciasHoy() {
@@ -106,13 +106,13 @@ public class MonitorAsistenciaController {
                 + " | sinAsistencia=" + sinAsistencia
                 + " | horaInicio=" + horaInicioStr);
 
-        // 👉 aquí ahora sí le pasas un LocalTime
+        // aquí se pasa un LocalTime
         String estadoSemaforo = calcularEstadoSemaforo(horaInicioReal, ahora, sinAsistencia);
 
         return MonitorAsistenciaSesionDTO.builder()
                 .sesionId(sesion.getId())
                 .seccionId(seccion.getId())
-                .nombreSeccion(seccion.getNombre())        // NUEVO, lo mantienes
+                .nombreSeccion(seccion.getNombre())        // NUEVO
                 .curso(seccion.getCurso().getTitulo())
                 .gradoSeccion(seccion.getGradoSeccion())
                 .nivelSeccion(seccion.getNivelSeccion().name())
@@ -145,7 +145,7 @@ public class MonitorAsistenciaController {
 
         // ya se pasó la tolerancia
         if (sinAsistencia > 0) {
-            return "ALERTA"; // aquí es donde al jefe le interesa
+            return "ALERTA"; // al jefe le interesa
         } else {
             return "OK";
         }
