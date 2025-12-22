@@ -51,10 +51,10 @@ public class AuthController {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuario = usuarioRepository.findByEmail(userDetails.getUsername()).orElseThrow();
 
-        // ✅ Access (corto) -> lo envías en el body
+        // Access (corto) -> lo envías en el body
         String accessToken = jwtService.generateAccessToken(userDetails);
 
-        // ✅ Refresh (largo) -> cookie HttpOnly
+        // Refresh (largo) -> cookie HttpOnly
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
         String dni = null;
