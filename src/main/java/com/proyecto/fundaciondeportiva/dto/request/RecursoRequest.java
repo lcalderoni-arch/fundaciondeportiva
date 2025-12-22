@@ -17,7 +17,7 @@ public class RecursoRequest {
     private String archivoUrl;
     private String linkVideo;
 
-    // 🔹 Para tareas
+    // Para tareas
     private LocalDateTime fechaInicioEntrega;
     private LocalDateTime fechaFinEntrega;
     private Boolean permiteEntregas;
