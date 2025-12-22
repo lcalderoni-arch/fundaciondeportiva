@@ -28,7 +28,7 @@ public class DataQualityController {
         return resp;
     }
 
-    @GetMapping("/resumen")   // 👈 NUEVO
+    @GetMapping("/resumen")   // NUEVO
     public ResponseEntity<Map<String, Object>> resumenCalidad() {
         return ResponseEntity.ok(cleaningService.obtenerResumenCalidad());
     }
