@@ -37,7 +37,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
            """)
     boolean existsByDni(@Param("dni") String dni);
 
-    // 👉 NUEVO: para listar por rol (ALUMNO, PROFESOR, ADMINISTRADOR)
+    // Para listar por rol (ALUMNO, PROFESOR, ADMINISTRADOR)
     List<Usuario> findByRol(Rol rol);
 
     @Query("SELECT u FROM Usuario u WHERE u.rol = com.proyecto.fundaciondeportiva.model.enums.Rol.ALUMNO")
