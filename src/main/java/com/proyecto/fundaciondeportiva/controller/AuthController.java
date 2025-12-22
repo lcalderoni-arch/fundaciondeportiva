@@ -111,7 +111,7 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
 
-        // ✅ carga user “oficial” del security
+        // carga user “oficial” del security
         UserDetails userDetails;
         try {
             userDetails = userDetailsService.loadUserByUsername(email);
@@ -123,7 +123,7 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
 
-        // ✅ nuevo access token
+        // nuevo access token
         String newAccessToken = jwtService.generateAccessToken(userDetails);
 
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
