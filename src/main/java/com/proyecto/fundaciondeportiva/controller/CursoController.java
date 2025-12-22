@@ -24,7 +24,7 @@ public class CursoController {
     // --- Endpoints de ADMIN ---
 
     @PostMapping
-    // 🚨 CORRECCIÓN: Tu Enum Rol.java usa 'ADMINISTRADOR' (y tu UsuarioService crea 'ROLE_ADMINISTRADOR')
+    // CORRECCIÓN
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CursoResponseDTO> crearCurso(@Valid @RequestBody CursoRequestDTO request) {
         String emailAdmin = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -33,14 +33,14 @@ public class CursoController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')") // 🚨 CORRECCIÓN
+    @PreAuthorize("hasRole('ADMINISTRADOR')") // CORRECCIÓN
     public ResponseEntity<CursoResponseDTO> actualizarCurso(@PathVariable Long id, @Valid @RequestBody CursoRequestDTO request) {
         CursoResponseDTO cursoActualizado = servicioCurso.actualizarCurso(id, request);
         return ResponseEntity.ok(cursoActualizado);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')") // 🚨 CORRECCIÓN
+    @PreAuthorize("hasRole('ADMINISTRADOR')") // CORRECCIÓN
     public ResponseEntity<Void> eliminarCurso(@PathVariable Long id) {
         servicioCurso.eliminarCurso(id);
         return ResponseEntity.noContent().build();
