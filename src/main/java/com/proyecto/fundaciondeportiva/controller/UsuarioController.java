@@ -104,7 +104,7 @@ public class UsuarioController {
         return ResponseEntity.noContent().build();
     }
 
-    // ⭐ NUEVO: cambiar permiso de matrícula de un alumno
+    // NUEVO: cambiar permiso de matrícula de un alumno
     @PatchMapping(
             value = "/{id}/permiso-matricula",
             consumes = MediaType.APPLICATION_JSON_VALUE,
