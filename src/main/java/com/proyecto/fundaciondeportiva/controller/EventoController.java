@@ -40,7 +40,7 @@ public class EventoController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
 
         Evento e = new Evento();
-        e.setUsuarioId(usuario.getId());      // ✅ ID real del usuario logueado
+        e.setUsuarioId(usuario.getId());      // ID real del usuario logueado
         e.setTipo(request.getTipo());
         e.setDetalles(request.getDetalles());
         e.setTs(LocalDateTime.now());
