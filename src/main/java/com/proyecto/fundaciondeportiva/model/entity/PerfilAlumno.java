@@ -34,7 +34,7 @@ public class PerfilAlumno {
     private String telefonoEmergencia;
 
     @OneToOne(mappedBy = "perfilAlumno")
-    @JsonBackReference          // ⬅️ IMPORTANTE: rompe el ciclo
+    @JsonBackReference          // IMPORTANTE: rompe el ciclo
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private Usuario usuario;
