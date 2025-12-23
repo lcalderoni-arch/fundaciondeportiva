@@ -79,17 +79,17 @@ public class Seccion {
     // --- Relaciones ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curso_id", nullable = false)
-    @ToString.Exclude // 👈 ¡ESTO EVITA EL ERROR 500!
+    @ToString.Exclude // ¡ESTO EVITA EL ERROR 500!
     private Curso curso;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profesor_id", nullable = false)
-    @ToString.Exclude // 👈 ¡ESTO TAMBIÉN!
+    @ToString.Exclude // ¡ESTO TAMBIÉN!
     private Usuario profesor;
 
     @OneToMany(mappedBy = "seccion", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    @ToString.Exclude // 👈 IMPORTANTE EN LISTAS
+    @ToString.Exclude // IMPORTANTE EN LISTAS
     private Set<Matricula> matriculas = new HashSet<>();
 
     @OneToMany(mappedBy = "seccion", cascade = CascadeType.ALL, orphanRemoval = true)
