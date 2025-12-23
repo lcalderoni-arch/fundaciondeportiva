@@ -39,7 +39,7 @@ public class RecursoServiceImpl implements RecursoService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    // 📂 directorio base donde se guardarán los archivos
+    // directorio base donde se guardarán los archivos
     @Value("${file.upload-dir}")
     private String uploadDir;
 
@@ -57,7 +57,7 @@ public class RecursoServiceImpl implements RecursoService {
     @Transactional
     public RecursoDTO crearRecurso(RecursoRequest request, String emailProfesor) {
 
-        System.out.println("📥 RecursoRequest recibido: "
+        System.out.println("RecursoRequest recibido: "
                 + "sesionId=" + request.getSesionId()
                 + ", titulo=" + request.getTitulo()
                 + ", momento=" + request.getMomento()
@@ -159,7 +159,7 @@ public class RecursoServiceImpl implements RecursoService {
         }
     }
 
-    // 🔹 NUEVO: actualizar recurso
+    // NUEVO: actualizar recurso
     @Override
     @Transactional
     public RecursoDTO actualizarRecurso(Long id, RecursoRequest request, String emailProfesor) {
@@ -198,7 +198,7 @@ public class RecursoServiceImpl implements RecursoService {
         return toDTO(recurso);
     }
 
-    // 🔹 NUEVO: eliminar recurso
+    // NUEVO: eliminar recurso
     @Override
     @Transactional
     public void eliminarRecurso(Long id, String emailProfesor) {
@@ -225,7 +225,7 @@ public class RecursoServiceImpl implements RecursoService {
         if (usuario.getRol() == Rol.PROFESOR) {
             if (sesion.getSeccion().getProfesor() == null ||
                     !sesion.getSeccion().getProfesor().getId().equals(usuario.getId())) {
-                System.out.println("❌ Permiso denegado: usuario " + usuario.getEmail()
+                System.out.println("Permiso denegado: usuario " + usuario.getEmail()
                         + " intenta crear/editar/eliminar recurso en sección " + sesion.getSeccion().getId());
                 throw new RuntimeException("No puedes registrar recursos en una sección que no es tuya.");
             }
@@ -246,7 +246,7 @@ public class RecursoServiceImpl implements RecursoService {
         dto.setFechaPublicacion(r.getFechaPublicacion());
         dto.setSesionId(r.getSesion().getId());
 
-        // 🔹 NUEVO – solo para tareas
+        // NUEVO – solo para tareas
         dto.setFechaInicioEntrega(r.getFechaInicioEntrega());
         dto.setFechaFinEntrega(r.getFechaFinEntrega());
         dto.setPermiteEntregas(r.getPermiteEntregas());
