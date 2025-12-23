@@ -146,7 +146,7 @@ public class ETLUsuariosService {
                     u.setNombre(nombre.trim());
                     u.setEmail(email.trim());
                     u.setRol(rolEnum);
-                    u.setPassword(passwordEncoder.encode(passwordPlano)); // 🔐 siempre encriptada
+                    u.setPassword(passwordEncoder.encode(passwordPlano)); // siempre encriptada
                     u.setHabilitadoMatricula(true);
 
                     // 8) Según rol, crear perfil
