@@ -19,7 +19,7 @@ public class RecursoDTO {
     private LocalDateTime fechaPublicacion;
     private Long sesionId;
 
-    // 🔹 Para tareas
+    // Para tareas
     private LocalDateTime fechaInicioEntrega;
     private LocalDateTime fechaFinEntrega;
     private Boolean permiteEntregas;
