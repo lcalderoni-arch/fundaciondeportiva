@@ -34,5 +34,5 @@ public class Asistencia {
     @JoinColumn(name = "matricula_id", nullable = false)
     private Matricula matricula;
 
-    // ❌ NO alumno aquí (porque no existe alumno_id en la tabla)
+    // NO alumno aquí 
 }
