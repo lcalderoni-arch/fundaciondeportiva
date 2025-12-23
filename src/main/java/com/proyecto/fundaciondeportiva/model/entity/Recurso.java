@@ -40,7 +40,7 @@ public class Recurso {
     @Column(nullable = false)
     private TipoRecurso tipo;
 
-    // 🔹 Solo usados cuando tipo == TAREA
+    // Solo usados cuando tipo == TAREA
     private LocalDateTime fechaInicioEntrega;
     private LocalDateTime fechaFinEntrega;
     private Boolean permiteEntregas;
