@@ -127,7 +127,7 @@ public class ServicioSeccionImpl implements ServicioSeccion {
                     .profesor(profesor)
                     .build();
 
-            // ⭐ GENERAR SEMANAS (SemanaSemana) EN LA ENTIDAD SECCIÓN
+            // GENERAR SEMANAS (SemanaSemana) EN LA ENTIDAD SECCIÓN
             logger.info("Generando {} semanas académicas...", request.getNumeroSemanas());
             nuevaSeccion.generarSemanas();
             logger.info("Semanas generadas en la entidad Seccion (no sesiones aún)");
@@ -138,7 +138,7 @@ public class ServicioSeccionImpl implements ServicioSeccion {
             logger.info("Total de semanas generadas: {}",
                     seccionGuardada.getSemanas() != null ? seccionGuardada.getSemanas().size() : 0);
 
-            // ⭐ NUEVO: GENERAR SESIONES (tabla sesiones)
+            // NUEVO: GENERAR SESIONES (tabla sesiones)
             generarSesionesParaSeccion(seccionGuardada);
 
             return SeccionResponseDTO.deEntidad(seccionGuardada);
@@ -202,7 +202,7 @@ public class ServicioSeccionImpl implements ServicioSeccion {
                 // Guardar cambios de la sección y sus semanas
                 Seccion seccionConSemanas = seccionRepository.save(seccionExistente);
 
-                // 🔥 BORRAR SESIONES ANTIGUAS Y RECREARLAS
+                // BORRAR SESIONES ANTIGUAS Y RECREARLAS
                 List<Sesion> sesionesAntiguas =
                         sesionRepository.findBySeccion_IdOrderByFechaAsc(seccionConSemanas.getId());
                 if (!sesionesAntiguas.isEmpty()) {
@@ -485,7 +485,7 @@ public class ServicioSeccionImpl implements ServicioSeccion {
     }
 
     /**
-     * ⭐ NUEVO: genera una sesión por semana para la sección,
+     * NUEVO: genera una sesión por semana para la sección,
      * usando la fechaInicio + i semanas.
      */
     private void generarSesionesParaSeccion(Seccion seccion) {
