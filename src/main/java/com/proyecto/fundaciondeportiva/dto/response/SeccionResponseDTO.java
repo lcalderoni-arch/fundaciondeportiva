@@ -28,7 +28,7 @@ public class SeccionResponseDTO {
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
 
-    // ⭐ NUEVO CAMPO
+    // NUEVO CAMPO
     private Integer numeroSemanas;
 
     private Boolean activa;
@@ -52,7 +52,7 @@ public class SeccionResponseDTO {
     private Boolean tieneCupo;
     private Boolean enPeriodoActivo;
 
-    // ⭐ NUEVAS ESTADÍSTICAS DE SEMANAS
+    // NUEVAS ESTADÍSTICAS DE SEMANAS
     private Integer semanaActual; // Número de la semana actual (0 si no está en periodo)
     private Integer totalSemanas; // Total de semanas generadas
 
@@ -75,7 +75,7 @@ public class SeccionResponseDTO {
                 .capacidad(seccion.getCapacidad())
                 .fechaInicio(seccion.getFechaInicio())
                 .fechaFin(seccion.getFechaFin())
-                .numeroSemanas(seccion.getNumeroSemanas()) // ⭐ NUEVO
+                .numeroSemanas(seccion.getNumeroSemanas()) // NUEVO
                 .activa(seccion.getActiva())
                 .fechaCreacion(seccion.getFechaCreacion())
                 // Curso
@@ -96,7 +96,7 @@ public class SeccionResponseDTO {
                 .cuposDisponibles(cuposDisponibles)
                 .tieneCupo(seccion.tieneCupoDisponible())
                 .enPeriodoActivo(seccion.estaEnPeriodoActivo())
-                // ⭐ NUEVAS ESTADÍSTICAS DE SEMANAS
+                // NUEVAS ESTADÍSTICAS DE SEMANAS
                 .semanaActual(seccion.getNumeroSemanaActual())
                 .totalSemanas(seccion.getSemanas().size())
                 .build();
