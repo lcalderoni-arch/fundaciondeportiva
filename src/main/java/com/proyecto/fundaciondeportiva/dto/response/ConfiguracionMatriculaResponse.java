@@ -23,7 +23,7 @@ public class ConfiguracionMatriculaResponse {
     // Permiso global de matrícula
     private Boolean matriculaHabilitada;
 
-    // ✅ Ciclo / Año escolar actual
+    // Ciclo / Año escolar actual
     private String cicloActual;
 
     public static ConfiguracionMatriculaResponse deEntidad(ConfiguracionMatricula config) {
