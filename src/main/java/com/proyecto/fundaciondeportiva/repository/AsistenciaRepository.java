@@ -13,7 +13,7 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     int countBySesionId(Long sesionId);
     int countBySesionIdAndEstadoIsNotNull(Long sesionId);
 
-    // ✅ CLAVE: ahora se usa Matricula + Sesion
+    // CLAVE: ahora se usa Matricula + Sesion
     Optional<Asistencia> findByMatriculaIdAndSesionId(Long matriculaId, Long sesionId);
 
     List<Asistencia> findByMatriculaId(Long matriculaId);
