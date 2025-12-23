@@ -29,7 +29,7 @@ public interface ServicioSeccion {
 
     List<SeccionResponseDTO> listarSeccionesPorProfesor(Long profesorId);
 
-    List<SeccionResponseDTO> listarSeccionesPorDniProfesor(String dni); // 👈 NUEVO
+    List<SeccionResponseDTO> listarSeccionesPorDniProfesor(String dni); // NUEVO
 
     List<SeccionResponseDTO> listarSeccionesPorTurno(Turno turno);
 
