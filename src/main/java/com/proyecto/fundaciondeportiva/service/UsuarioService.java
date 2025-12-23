@@ -283,7 +283,7 @@ public class UsuarioService implements UserDetailsService {
         return UsuarioResponse.deEntidad(usuario);
     }
 
-    // ⭐ NUEVO MÉTODO: actualizar permiso de matrícula de un alumno
+    // NUEVO MÉTODO: actualizar permiso de matrícula de un alumno
     @Transactional
     public Usuario actualizarPermisoMatricula(Long idUsuario, boolean habilitado) {
         Usuario usuario = obtenerUsuarioPorId(idUsuario);
