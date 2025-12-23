@@ -16,7 +16,7 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ⭐ NUEVO: Manejador para ValidacionException
+    // NUEVO: Manejador para ValidacionException
     @ExceptionHandler(ValidacionException.class)
     public ResponseEntity<ErrorResponse> handleValidacionException(ValidacionException ex) {
         ErrorResponse error = new ErrorResponse(
@@ -94,7 +94,7 @@ public class GlobalExceptionHandler {
     // Manejador genérico para otras excepciones no controladas explícitamente
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        // ⭐ MEJORA: Imprimir stack trace para debugging
+        // MEJORA: Imprimir stack trace para debugging
         ex.printStackTrace();
 
         ErrorResponse error = new ErrorResponse(
