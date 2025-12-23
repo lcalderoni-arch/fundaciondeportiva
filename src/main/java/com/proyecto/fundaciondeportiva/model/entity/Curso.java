@@ -40,10 +40,10 @@ public class Curso {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creado_por", nullable = false)
-    @ToString.Exclude // 👈 Evitar ciclo con Usuario
+    @ToString.Exclude // Evitar ciclo con Usuario
     private Usuario creadoPor;
 
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude // 👈 Evitar ciclo con Seccion
+    @ToString.Exclude // Evitar ciclo con Seccion
     private Set<Seccion> secciones;
 }
