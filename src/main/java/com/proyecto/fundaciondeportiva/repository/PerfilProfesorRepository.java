@@ -12,6 +12,6 @@ public interface PerfilProfesorRepository extends JpaRepository<PerfilProfesor, 
 
     boolean existsByDni(String dni);
 
-    // ⭐ NUEVO: Para obtener el perfil completo y dar mejor mensaje de error
+    // NUEVO: Para obtener el perfil completo y dar mejor mensaje de error
     Optional<PerfilProfesor> findByDni(String dni);
 }
