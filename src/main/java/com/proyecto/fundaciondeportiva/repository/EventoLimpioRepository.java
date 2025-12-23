@@ -13,5 +13,5 @@ public interface EventoLimpioRepository extends JpaRepository<EventoLimpio, Long
     Long findUltimoEventoProcesado();
 
     @Query("SELECT el.calidad, COUNT(el) FROM EventoLimpio el GROUP BY el.calidad")
-    List<Object[]> countByCalidad();  // 👈 NUEVO
+    List<Object[]> countByCalidad();  // NUEVO
 }
