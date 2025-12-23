@@ -77,7 +77,6 @@ public class DataCleaningService {
         if (detalles == null || detalles.isBlank()) {
             return "{}";
         }
-        // aquí podrías parsear JSON y corregir campos si quieres
         return detalles;
     }
 
