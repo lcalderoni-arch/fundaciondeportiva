@@ -59,7 +59,7 @@ public class ConfiguracionMatriculaServiceImpl implements ConfiguracionMatricula
         return ConfiguracionMatriculaResponse.deEntidad(guardada);
     }
 
-    // ✅ NUEVO
+    // NUEVO
     @Override
     @Transactional
     public ConfiguracionMatriculaResponse actualizarCicloActual(String cicloActual) {
