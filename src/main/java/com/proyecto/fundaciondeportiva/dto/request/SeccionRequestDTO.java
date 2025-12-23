@@ -47,7 +47,7 @@ public class SeccionRequestDTO {
     @NotNull(message = "La fecha de fin es obligatoria")
     private LocalDate fechaFin;
 
-    // ⭐ NUEVO CAMPO: Número de semanas académicas
+    // NUEVO CAMPO: Número de semanas académicas
     @NotNull(message = "El número de semanas es obligatorio")
     @Min(value = 1, message = "Debe haber al menos 1 semana")
     @Max(value = 52, message = "No puede exceder 52 semanas")
